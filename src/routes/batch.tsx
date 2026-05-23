@@ -130,17 +130,22 @@ function BatchPage() {
         {total > 0 && !allDone && (
           <div className="mt-10">
             <div
-              className="h-2 rounded-full overflow-hidden"
-              style={{ background: "var(--bg-raised)" }}
+              className="overflow-hidden"
+              style={{ width: "100%", height: 4, background: "#1A1A24", borderRadius: 2 }}
             >
               <div
-                className="h-full batch-progress-fill transition-all duration-500"
-                style={{ width: `${(completed / total) * 100}%` }}
+                className="transition-all duration-500"
+                style={{
+                  height: 4,
+                  borderRadius: 2,
+                  background: "linear-gradient(90deg, #4FFFB0, #7AFFCC)",
+                  width: `${(completed / total) * 100}%`,
+                }}
               />
             </div>
             <div
-              className="mt-3 font-mono text-[12px]"
-              style={{ color: "var(--accent)" }}
+              className="font-mono"
+              style={{ marginTop: 10, fontSize: 13, color: "#4FFFB0" }}
             >
               {completed} / {total} COMPLETE
             </div>
@@ -149,11 +154,16 @@ function BatchPage() {
 
         {/* Summary */}
         {allDone && (
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard label="Successful" value={stats.success} tone="var(--accent)" />
-            <StatCard label="Partial" value={stats.partial} tone="var(--warning)" />
-            <StatCard label="Failed" value={stats.failed} tone="var(--error)" />
-            <div className="sm:col-span-3 mt-4 max-w-[320px]">
+          <div className="mt-10">
+            <div
+              className="flex flex-col sm:flex-row slide-up"
+              style={{ gap: 16, marginBottom: 32 }}
+            >
+              <StatCard label="Successful" value={stats.success} tone="#4FFFB0" />
+              <StatCard label="Partial" value={stats.partial} tone="#FFB84F" />
+              <StatCard label="Failed" value={stats.failed} tone="#FF5C5C" />
+            </div>
+            <div className="max-w-[320px]">
               <PrimaryButton type="button" onClick={downloadAllCsv}>
                 Download All as CSV
               </PrimaryButton>
@@ -231,15 +241,20 @@ function BatchPage() {
 function StatCard({ label, value, tone }: { label: string; value: number; tone: string }) {
   return (
     <div
-      className="rounded-xl p-6"
-      style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}
+      style={{
+        flex: 1,
+        padding: "28px 24px",
+        background: "#111118",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 12,
+      }}
     >
-      <div className="font-display italic text-[48px] leading-none" style={{ color: tone }}>
+      <div className="font-display italic leading-none" style={{ fontSize: 56, color: tone }}>
         {value}
       </div>
       <div
-        className="mt-3 font-ui uppercase text-[10px] tracking-widest-2"
-        style={{ color: "var(--text-muted)" }}
+        className="font-ui uppercase"
+        style={{ marginTop: 12, fontSize: 10, letterSpacing: "0.15em", color: "#4A4958" }}
       >
         {label}
       </div>

@@ -1,9 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 
 const NAV = [
-  { to: "/", label: "Scrape" },
-  { to: "/history", label: "History" },
-  { to: "/batch", label: "Batch" },
+  { to: "/", label: "Scrape", icon: "◈" },
+  { to: "/history", label: "History", icon: "≡" },
+  { to: "/batch", label: "Batch", icon: "⊞" },
 ] as const;
 
 export function Sidebar() {
@@ -11,52 +11,76 @@ export function Sidebar() {
   return (
     <aside
       className="hidden md:flex md:flex-col fixed left-0 top-0 h-screen w-[220px] z-30"
-      style={{ background: "var(--bg-base)", borderRight: "1px solid var(--border)" }}
+      style={{ background: "#111118", borderRight: "1px solid rgba(255,255,255,0.06)" }}
     >
-      <div className="px-6 pt-8 pb-10">
+      <div style={{ padding: "32px 24px 40px 24px" }}>
         <Link to="/" className="block">
-          <div className="font-display italic text-[44px] leading-none text-text-primary">
-            Uni
+          <div
+            className="font-display italic leading-none"
+            style={{ fontSize: 32, color: "#F2EFE9" }}
+          >
+            UNI
           </div>
           <div
-            className="font-ui uppercase text-[10px] mt-1 tracking-widest-2"
-            style={{ color: "var(--accent)" }}
+            className="font-ui uppercase mt-1"
+            style={{ fontSize: 10, letterSpacing: "0.2em", color: "#4FFFB0" }}
           >
-            S c r a p e r
+            Scraper
           </div>
         </Link>
       </div>
 
-      <nav className="flex flex-col gap-1 px-3 flex-1">
+      <nav className="flex flex-col gap-1 flex-1" style={{ padding: "0 12px" }}>
         {NAV.map((item) => {
           const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
           return (
             <Link
               key={item.to}
               to={item.to}
-              className="relative font-ui uppercase text-[11px] tracking-widest-2 px-4 py-3 rounded-md transition-colors"
+              className="relative font-ui uppercase flex items-center transition-colors"
               style={{
-                color: active ? "var(--accent)" : "var(--text-secondary)",
-                background: active ? "var(--accent-dim)" : "transparent",
-                borderLeft: `2px solid ${active ? "var(--accent)" : "transparent"}`,
+                height: 44,
+                padding: "0 12px",
+                borderRadius: 6,
+                fontSize: 11,
+                letterSpacing: "0.15em",
+                color: active ? "#4FFFB0" : "#4A4958",
+                background: active ? "rgba(79,255,176,0.08)" : "transparent",
+                borderLeft: `2px solid ${active ? "#4FFFB0" : "transparent"}`,
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  e.currentTarget.style.color = "#8B8A97";
+                  e.currentTarget.style.background = "#1A1A24";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  e.currentTarget.style.color = "#4A4958";
+                  e.currentTarget.style.background = "transparent";
+                }
               }}
             >
+              <span style={{ fontSize: 16, marginRight: 10, lineHeight: 1 }}>{item.icon}</span>
               {item.label}
             </Link>
           );
         })}
       </nav>
 
-      <div className="px-6 pb-6 flex items-center gap-2">
+      <div
+        className="absolute flex items-center"
+        style={{ bottom: 24, left: 0, right: 0, padding: "0 24px" }}
+      >
         <span
-          className="pulse-dot inline-block w-1.5 h-1.5 rounded-full"
-          style={{ background: "var(--accent)", boxShadow: "0 0 8px var(--accent-glow)" }}
+          className="pulse-dot inline-block rounded-full"
+          style={{ width: 6, height: 6, background: "#4FFFB0", boxShadow: "0 0 8px rgba(79,255,176,0.5)" }}
         />
         <span
-          className="font-ui text-[10px] uppercase tracking-widest-2"
-          style={{ color: "var(--text-muted)" }}
+          className="font-ui uppercase"
+          style={{ marginLeft: 8, fontSize: 10, letterSpacing: "0.15em", color: "#4A4958" }}
         >
-          Powered by AI
+          API Online
         </span>
       </div>
     </aside>

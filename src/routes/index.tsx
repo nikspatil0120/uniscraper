@@ -127,7 +127,7 @@ function ScrapePage() {
         {/* LEFT — input */}
         <section
           className="p-10 flex flex-col gap-6"
-          style={{ borderRight: "1px solid var(--border)", minHeight: "calc(100vh - 122px)" }}
+          style={{ borderRight: "1px solid rgba(255,255,255,0.06)", minHeight: "calc(100vh - 56px)" }}
         >
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div>
@@ -252,19 +252,19 @@ function ScrapePage() {
         <section
           ref={resultsRef}
           className="relative p-10 grid-pattern"
-          style={{ minHeight: "calc(100vh - 122px)" }}
+          style={{ minHeight: "calc(100vh - 56px)" }}
         >
           {!activeId && !isProcessing && !isDone && (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <div
                 className="font-display italic leading-none"
-                style={{ fontSize: 140, color: "var(--text-primary)", opacity: 0.05 }}
+                style={{ fontSize: 180, color: "rgba(242,239,233,0.04)" }}
               >
                 0
               </div>
               <div
-                className="mt-6 font-ui uppercase text-[11px] tracking-widest-2"
-                style={{ color: "var(--text-secondary)" }}
+                className="mt-6 font-ui uppercase tracking-widest-2"
+                style={{ fontSize: 13, color: "#4A4958" }}
               >
                 Paste a URL and hit scrape
               </div>

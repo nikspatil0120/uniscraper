@@ -91,10 +91,8 @@
   .tracking-widest-2 { letter-spacing: 0.15em; }
 
   .grid-pattern {
-    background-image:
-      linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-    background-size: 32px 32px;
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 
   .focus-glow:focus {
@@ -103,20 +101,15 @@
   }
 
   .shimmer {
-    background: linear-gradient(
-      90deg,
-      var(--bg-raised) 0%,
-      var(--bg-hover) 50%,
-      var(--bg-raised) 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.6s infinite;
+    background: linear-gradient(90deg, #1A1A24 25%, #22222E 50%, #1A1A24 75%);
+    background-size: 800px 100%;
+    animation: shimmer 1.8s infinite;
   }
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
 }
 
 @keyframes pulse-dot {
