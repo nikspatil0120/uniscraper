@@ -61,9 +61,56 @@ async def _fetch_with_httpx(url: str) -> dict:
 
 async def _fetch_with_playwright(url: str) -> dict:
     """Fetch the page using a headless Chromium browser via Playwright."""
-    # Temporarily disabled on Windows due to subprocess issues
-    # TODO: Fix Windows Playwright integration
-    raise Exception("Playwright temporarily disabled on Windows - use httpx fallback")
+    import os
+    from playwright.async_api import async_playwright
+
+    # Verify Chromium is installed before attempting launch
+    possible_paths = [
+        os.path.expanduser(r"~\AppData\Local\ms-playwright\chromium-1169\chrome-win\chrome.exe"),
+        os.path.expanduser(r"~\AppData\Local\ms-playwright\chromium-1117\chrome-win\chrome.exe"),
+        os.path.expanduser(r"~\AppData\Local\ms-playwright\chromium-1124\chrome-win\chrome.exe"),
+    ]
+    chromium_found = any(os.path.exists(p) for p in possible_paths)
+    if not chromium_found:
+        # Try to find any chromium version dynamically
+        ms_playwright = os.path.expanduser(r"~\AppData\Local\ms-playwright")
+        if os.path.exists(ms_playwright):
+            for entry in os.listdir(ms_playwright):
+                if entry.startswith("chromium"):
+                    exe = os.path.join(ms_playwright, entry, "chrome-win", "chrome.exe")
+                    if os.path.exists(exe):
+                        chromium_found = True
+                        break
+        if not chromium_found:
+            raise Exception(
+                "Chromium not found in ms-playwright directory. "
+                "Run: venv\\Scripts\\playwright install chromium"
+            )
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        try:
+            context = await browser.new_context(
+                user_agent=_HEADERS["User-Agent"],
+                java_script_enabled=True,
+            )
+            page = await context.new_page()
+            await page.goto(url, timeout=_PLAYWRIGHT_TIMEOUT, wait_until="networkidle")
+            # Extra wait for heavy SPAs that render after networkidle
+            await page.wait_for_timeout(2000)
+            html = await page.content()
+            final_url = page.url
+            word_count = _count_words(html)
+            return {
+                "html": html,
+                "method_used": "playwright",
+                "status_code": 200,
+                "final_url": final_url,
+                "word_count": word_count,
+                "error": None,
+            }
+        finally:
+            await browser.close()
 
 
 async def fetch_page(url: str) -> dict:
