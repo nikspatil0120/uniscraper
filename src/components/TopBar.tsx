@@ -7,18 +7,25 @@ export function TopBar({ title }: { title: string }) {
     return () => clearInterval(t);
   }, []);
   const stamp =
-    now.toISOString().slice(0, 10) + "  " + now.toTimeString().slice(0, 8) + " UTC";
+    now.toISOString().slice(0, 10) + " " + now.toISOString().slice(11, 19) + " UTC";
   return (
     <div
-      className="flex items-end justify-between px-10 pt-10 pb-6"
-      style={{ borderBottom: "1px solid var(--border)" }}
+      className="flex items-center justify-between"
+      style={{
+        height: 56,
+        padding: "0 40px",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+      }}
     >
-      <h1 className="font-display italic text-[40px] leading-none text-text-primary">
+      <h1
+        className="font-display italic leading-none"
+        style={{ fontSize: 22, color: "#F2EFE9" }}
+      >
         {title}
       </h1>
       <div
-        className="font-mono text-[11px] uppercase"
-        style={{ color: "var(--text-muted)" }}
+        className="font-mono"
+        style={{ fontSize: 13, color: "#4A4958" }}
       >
         {stamp}
       </div>
