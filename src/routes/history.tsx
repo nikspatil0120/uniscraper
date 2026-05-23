@@ -117,19 +117,38 @@ function HistoryPage() {
           </div>
 
           {list.isLoading && (
-            <div className="px-6 py-10">
+            <div className="px-6 py-6">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-6 mb-3 rounded shimmer" />
+                <div
+                  key={i}
+                  className="grid grid-cols-[2fr_2fr_0.8fr_0.8fr_1fr_0.6fr] gap-4 items-center"
+                  style={{ marginBottom: 16 }}
+                >
+                  <div className="shimmer" style={{ width: 180, height: 16, borderRadius: 4 }} />
+                  <div className="shimmer" style={{ width: 140, height: 14, borderRadius: 4 }} />
+                  <div className="shimmer" style={{ width: 60, height: 22, borderRadius: 999 }} />
+                  <div className="shimmer" style={{ width: 70, height: 22, borderRadius: 999 }} />
+                  <div className="shimmer" style={{ width: 90, height: 14, borderRadius: 4 }} />
+                  <div />
+                </div>
               ))}
             </div>
           )}
 
           {!list.isLoading && filtered.length === 0 && (
-            <div
-              className="py-16 text-center font-ui uppercase text-[11px] tracking-widest-2"
-              style={{ color: "var(--text-muted)" }}
-            >
-              No scrapes yet
+            <div className="py-20 text-center">
+              <div
+                className="font-display italic"
+                style={{ fontSize: 24, color: "#4A4958" }}
+              >
+                No scrapes yet
+              </div>
+              <div
+                className="font-ui mt-2"
+                style={{ fontSize: 12, color: "#4A4958" }}
+              >
+                Run your first scrape to see history here
+              </div>
             </div>
           )}
 
@@ -144,17 +163,17 @@ function HistoryPage() {
               }
             >
               <div className="font-display text-[15px]" style={{ color: "var(--text-primary)" }}>
-                {row.university_name || "—"}
+                {row.university_name ? row.university_name : <NotFound />}
               </div>
               <div className="font-ui text-[12px]" style={{ color: "var(--text-secondary)" }}>
-                {row.program_name || "—"}
+                {row.program_name ? row.program_name : <NotFound />}
               </div>
-              <div>{row.degree_level && <Badge>{row.degree_level}</Badge>}</div>
+              <div>{row.degree_level ? <Badge>{row.degree_level}</Badge> : <NotFound />}</div>
               <div>
                 <StatusBadge status={row.status} />
               </div>
               <div className="font-mono text-[12px]" style={{ color: "var(--text-muted)" }}>
-                {row.created_at ? new Date(row.created_at).toLocaleString() : "—"}
+                {row.created_at ? new Date(row.created_at).toLocaleString() : <NotFound />}
               </div>
               <div className="flex items-center gap-4 justify-end">
                 <button
