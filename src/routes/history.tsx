@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { TopBar } from "@/components/TopBar";
 import { api, type ScrapeRecord } from "@/lib/api";
 import { Badge, ResultsCard, StatusBadge } from "@/components/ResultsCard";
+import { NotFound } from "@/components/NotFound";
 
 export const Route = createFileRoute("/history")({
   head: () => ({
