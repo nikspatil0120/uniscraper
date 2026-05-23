@@ -42,3 +42,4 @@ package-lock.json
 
 # Backend — handled by uniscraper-backend/.gitignore
 # (venv, __pycache__, .env are excluded there)
+uniscraper-backend/tests/validation/results/toronto_mba.txt
