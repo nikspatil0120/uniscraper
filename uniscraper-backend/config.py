@@ -10,6 +10,7 @@ from typing import List
 class Settings(BaseSettings):
     openrouter_api_key: str = ""
     gemini_api_key: str = ""
+    groq_api_key: str = ""
     mongodb_uri: str = "mongodb://localhost:27017"
     db_name: str = "autonova_scraper"
     max_subpages: int = 4

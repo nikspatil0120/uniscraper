@@ -38,6 +38,9 @@ _GEMINI_URL = (
 _OLLAMA_URL = "http://localhost:11434/api/chat"
 _OLLAMA_MODEL = "qwen2.5:1.5b"  # Fast on CPU (~10-15s), good enough for fallback
 
+_GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+_GROQ_MODEL = "llama-3.3-70b-versatile"  # Best Groq model for structured extraction
+
 # ── Gemini rate-limit controls ────────────────────────────────────────────────
 # Free tier: 10 RPM, ~4M TPM for Flash. We target max 3 RPM to stay safe.
 _GEMINI_SEMAPHORE = asyncio.Semaphore(1)   # Only ONE Gemini call at a time globally
@@ -235,6 +238,45 @@ async def _is_ollama_available() -> bool:
             return r.status_code == 200
     except Exception:
         return False
+
+
+# ── Groq caller ───────────────────────────────────────────────────────────────
+
+async def _call_groq(user_prompt: str) -> str:
+    """
+    Call Groq API (OpenAI-compatible) with llama-3.3-70b-versatile.
+    Fast cloud inference, separate quota from Gemini.
+    Truncates to 12k chars — Groq has generous context but we keep it focused.
+    """
+    MAX_GROQ_CHARS = 12000
+    if len(user_prompt) > MAX_GROQ_CHARS:
+        user_prompt = user_prompt[:MAX_GROQ_CHARS] + "\n--- END COMBINED PAGE TEXT ---"
+
+    payload = {
+        "model": _GROQ_MODEL,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user",   "content": user_prompt},
+        ],
+        "temperature": 0,
+        "max_tokens": 4000,
+        "response_format": {"type": "json_object"},
+    }
+
+    headers = {
+        "Authorization": f"Bearer {settings.groq_api_key}",
+        "Content-Type": "application/json",
+    }
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(_GROQ_URL, json=payload, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+
+    try:
+        return data["choices"][0]["message"]["content"]
+    except (KeyError, IndexError) as e:
+        raise ValueError(f"Unexpected Groq response structure: {e} — {str(data)[:300]}")
 
 
 # ── Public entry point ────────────────────────────────────────────────────────
@@ -455,10 +497,25 @@ async def extract_fields(
                 consecutive_429s += 1
 
             if (status == 429 or status >= 500) and attempt < _MAX_RETRIES - 1:
-                # After 2 consecutive 429s, try Ollama (local, no quota)
+                # After 2 consecutive 429s, try Groq first (fast cloud, separate quota)
                 if consecutive_429s >= 2:
-                    logger.warning(f"[ai_extractor] {consecutive_429s} consecutive 429s — trying Ollama fallback")
-                    print(f"[ai_extractor] Gemini rate-limited ({consecutive_429s}x) — switching to Ollama/{_OLLAMA_MODEL}")
+                    logger.warning(f"[ai_extractor] {consecutive_429s} consecutive 429s — trying Groq fallback")
+                    print(f"[ai_extractor] Gemini rate-limited ({consecutive_429s}x) — trying Groq/{_GROQ_MODEL}")
+                    if settings.groq_api_key:
+                        try:
+                            raw_response = await _call_groq(user_prompt)
+                            model_used = f"groq/{_GROQ_MODEL}"
+                            logger.info("[ai_extractor] Groq fallback succeeded")
+                            print("[ai_extractor] Groq extraction complete")
+                            break
+                        except Exception as groq_err:
+                            logger.warning(f"[ai_extractor] Groq fallback failed: {type(groq_err).__name__}: {groq_err}")
+                            print(f"[ai_extractor] Groq error ({type(groq_err).__name__}) — trying Ollama")
+                    else:
+                        print("[ai_extractor] No GROQ_API_KEY set — skipping Groq fallback")
+
+                    # Groq failed or not configured — try Ollama next
+                    print(f"[ai_extractor] Trying Ollama/{_OLLAMA_MODEL} as secondary fallback")
                     try:
                         if await _is_ollama_available():
                             raw_response = await _call_ollama(user_prompt)
@@ -472,10 +529,10 @@ async def extract_fields(
                         logger.warning(f"[ai_extractor] Ollama fallback failed: {type(ollama_err).__name__}: {ollama_err}")
                         print(f"[ai_extractor] Ollama error ({type(ollama_err).__name__}) — falling back to flash-lite")
 
-                # Also switch to flash-lite after 2 429s if Ollama unavailable
+                # Final cloud fallback: flash-lite (higher RPM limit)
                 if status == 429 and attempt >= 1 and active_model == settings.llm_model:
                     active_model = "gemini-2.5-flash-lite"
-                    print(f"[ai_extractor] Also trying flash-lite as secondary fallback")
+                    print(f"[ai_extractor] Switching to flash-lite as final fallback")
 
                 delay = _RETRY_DELAYS[attempt] + random.uniform(0, 2)
                 print(f"[ai_extractor] HTTP {status} — retry {attempt + 1}/{_MAX_RETRIES} in {delay:.0f}s...")
