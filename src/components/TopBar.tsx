@@ -1,20 +1,26 @@
 import { useEffect, useState } from "react";
 
 export function TopBar({ title }: { title: string }) {
-  const [now, setNow] = useState(() => new Date());
+  const [stamp, setStamp] = useState("");
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
+    const update = () =>
+      setStamp(new Date().toISOString().replace("T", " ").substring(0, 19) + " UTC");
+    update();
+    const t = setInterval(update, 1000);
     return () => clearInterval(t);
   }, []);
-  const stamp =
-    now.toISOString().slice(0, 10) + " " + now.toISOString().slice(11, 19) + " UTC";
   return (
     <div
       className="flex items-center justify-between"
       style={{
         height: 56,
         padding: "0 40px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
+        background: "#0A0A0F",
+        flexShrink: 0,
       }}
     >
       <h1

@@ -10,8 +10,17 @@ export function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <aside
-      className="hidden md:flex md:flex-col fixed left-0 top-0 h-screen w-[220px] z-30"
-      style={{ background: "#111118", borderRight: "1px solid rgba(255,255,255,0.06)" }}
+      className="flex flex-col"
+      style={{
+        width: 220,
+        minWidth: 220,
+        height: "100vh",
+        position: "sticky",
+        top: 0,
+        background: "#111118",
+        borderRight: "1px solid rgba(255,255,255,0.06)",
+        padding: 0,
+      }}
     >
       <div style={{ padding: "32px 24px 40px 24px" }}>
         <Link to="/" className="block">
@@ -61,26 +70,23 @@ export function Sidebar() {
                 }
               }}
             >
-              <span style={{ fontSize: 16, marginRight: 10, lineHeight: 1 }}>{item.icon}</span>
+              <span style={{ fontSize: 14, marginRight: 10, lineHeight: 1 }}>{item.icon}</span>
               {item.label}
             </Link>
           );
         })}
       </nav>
 
-      <div
-        className="absolute flex items-center"
-        style={{ bottom: 24, left: 0, right: 0, padding: "0 24px" }}
-      >
+      <div className="flex items-center" style={{ padding: 24, gap: 8 }}>
         <span
           className="pulse-dot inline-block rounded-full"
-          style={{ width: 6, height: 6, background: "#4FFFB0", boxShadow: "0 0 8px rgba(79,255,176,0.5)" }}
+          style={{ width: 6, height: 6, background: "#4FFFB0" }}
         />
         <span
           className="font-ui uppercase"
-          style={{ marginLeft: 8, fontSize: 10, letterSpacing: "0.15em", color: "#4A4958" }}
+          style={{ fontSize: 10, letterSpacing: "0.15em", color: "#4A4958" }}
         >
-          API Online
+          API ONLINE
         </span>
       </div>
     </aside>

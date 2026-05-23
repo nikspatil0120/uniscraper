@@ -117,9 +117,9 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen w-full" style={{ background: "var(--bg-base)" }}>
+      <div className="h-screen w-full flex overflow-hidden" style={{ background: "var(--bg-base)" }}>
         <Sidebar />
-        <main className="md:ml-[220px] min-h-screen page-in" key={typeof window !== "undefined" ? window.location.pathname : "ssr"}>
+        <main className="h-screen flex-1 min-w-0 overflow-auto page-in">
           <Outlet />
         </main>
         <Toaster
