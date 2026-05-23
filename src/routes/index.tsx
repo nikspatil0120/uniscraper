@@ -120,14 +120,18 @@ function ScrapePage() {
   const isDone = detail.data && detail.data.status !== "processing";
 
   return (
-    <div className="page-in">
+    <div className="page-in h-screen overflow-hidden flex flex-col">
       <TopBar title="Scrape" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[45%_55%] gap-0">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* LEFT — input */}
         <section
-          className="p-10 flex flex-col gap-6"
-          style={{ borderRight: "1px solid rgba(255,255,255,0.06)", minHeight: "calc(100vh - 56px)" }}
+          className="p-10 flex flex-col gap-6 overflow-y-auto"
+          style={{
+            width: "45%",
+            minWidth: 360,
+            borderRight: "1px solid rgba(255,255,255,0.06)",
+          }}
         >
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div>
@@ -217,42 +221,43 @@ function ScrapePage() {
             )}
           </div>
 
-          {recent.length > 0 && (
-            <div className="mt-auto pt-6" style={{ borderTop: "1px solid var(--border)" }}>
+          <div className="mt-auto pt-8" style={{ borderTop: "1px solid var(--border)" }}>
               <div
                 className="font-ui uppercase text-[9px] tracking-widest-2 mb-3"
                 style={{ color: "var(--text-muted)" }}
               >
                 Recent
               </div>
-              <ul className="flex flex-col gap-1">
-                {recent.map((r) => (
-                  <li key={r.id}>
-                    <button
-                      onClick={() => {
-                        setActiveId(r.id);
-                        setStartedAt(Date.now() - 16000);
-                      }}
-                      className="w-full text-left font-mono text-[11px] py-1.5 flex justify-between items-center hover:text-text-primary transition-colors"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      <span className="truncate">{r.name}</span>
-                      <span className="ml-3 shrink-0">
-                        {new Date(r.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              {recent.length > 0 ? (
+                <ul className="flex flex-col gap-1">
+                  {recent.slice(0, 3).map((r) => (
+                    <li key={r.id}>
+                      <button
+                        onClick={() => {
+                          setActiveId(r.id);
+                          setStartedAt(Date.now() - 16000);
+                        }}
+                        className="w-full text-left font-ui text-[12px] py-1.5 flex justify-between items-center transition-colors"
+                        style={{ color: "#8B8A97", cursor: "pointer" }}
+                      >
+                        <span className="truncate">{r.name}</span>
+                        <span className="ml-3 shrink-0">{formatRelativeTime(r.ts)}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="font-ui text-[12px]" style={{ color: "var(--text-muted)" }}>
+                  No scrapes yet
+                </div>
+              )}
             </div>
-          )}
         </section>
 
         {/* RIGHT — results */}
         <section
           ref={resultsRef}
-          className="relative p-10 grid-pattern"
-          style={{ minHeight: "calc(100vh - 56px)" }}
+          className="relative p-10 grid-pattern flex-1 min-w-0"
         >
           {!activeId && !isProcessing && !isDone && (
             <div className="flex flex-col items-center justify-center h-full text-center">
