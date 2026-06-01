@@ -10,29 +10,33 @@ const STEPS = [
   "Saving results",
 ];
 
-// Approximate progression: ~15s total scrape
-const STEP_TIMINGS = [1.5, 3.5, 6, 8.5, 12.5, 15];
+interface ScrapeTimelineProps {
+  startedAt: number;
+  currentStep?: string;  // Real-time step from backend
+}
 
-export function ScrapeTimeline({ startedAt }: { startedAt: number }) {
+export function ScrapeTimeline({ startedAt, currentStep }: ScrapeTimelineProps) {
   const [elapsed, setElapsed] = useState(0);
+  
   useEffect(() => {
     const t = setInterval(() => setElapsed((Date.now() - startedAt) / 1000), 100);
     return () => clearInterval(t);
   }, [startedAt]);
 
-  const activeIndex = Math.min(
-    STEPS.length - 1,
-    STEP_TIMINGS.findIndex((t) => elapsed < t) === -1
-      ? STEPS.length - 1
-      : STEP_TIMINGS.findIndex((t) => elapsed < t),
-  );
+  // Determine active step based on backend's current_step
+  const activeIndex = currentStep 
+    ? STEPS.findIndex(step => step === currentStep)
+    : 0;
+  
+  // If step not found or not provided, default to first step
+  const currentActiveIndex = activeIndex >= 0 ? activeIndex : 0;
 
   return (
     <div className="w-full max-w-md mx-auto py-12">
       <div className="relative flex flex-col gap-7">
         {STEPS.map((label, i) => {
-          const done = i < activeIndex;
-          const active = i === activeIndex;
+          const done = i < currentActiveIndex;
+          const active = i === currentActiveIndex;
           return (
             <div key={label} className="flex items-center gap-4 relative">
               <div

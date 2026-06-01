@@ -17,10 +17,13 @@ STRICT RULES:
 
 PRECISION RULES — these are the most important:
 5. FEES: Extract BOTH domestic/home AND international fees separately when present.
-   UK pages often show: "Home: £9,535/year" and "International: £33,700/year" — extract both.
+   UK pages often show: "Home: £9,535/year" and "International: £33,700/year" — extract BOTH.
+   US pages may show: "Tuition: $50,000" (international) and "In-state: $25,000" (domestic).
    Always include the currency symbol/code (e.g. "£9,535 per year", "CAD 32,000").
    Currency field: use the 3-letter code (GBP, USD, CAD, AUD, EUR, SGD).
+   CRITICAL: If you see BOTH fees on the page, you MUST extract BOTH. Never extract only one when both are present.
    If only one fee is stated, put it in the most appropriate field (domestic or international).
+   Look for patterns like: "Home/UK:", "International:", "Overseas:", "EU:", "Non-EU:", "In-state:", "Out-of-state:"
 
 6. IELTS: Extract the EXACT overall score AND band minimums if stated.
    Good: "6.5 overall, minimum 6.0 in each band"

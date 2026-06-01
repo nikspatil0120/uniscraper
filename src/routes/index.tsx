@@ -165,7 +165,12 @@ function ScrapePage() {
             </div>
           )}
 
-          {isProcessing && startedAt && <ScrapeTimeline startedAt={startedAt} />}
+          {isProcessing && startedAt && (
+            <ScrapeTimeline 
+              startedAt={startedAt} 
+              currentStep={detail.data?.current_step}
+            />
+          )}
 
           {isDone && detail.data && <ResultsCard data={detail.data} />}
         </section>

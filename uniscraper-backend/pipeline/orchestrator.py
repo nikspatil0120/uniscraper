@@ -71,14 +71,22 @@ async def run_scrape(scrape_id: str, url: str, context_hint: str = "") -> None:
     start_time = time.monotonic()
     col = database.scrape_results_collection
 
+    async def update_progress(step: str):
+        """Helper to update progress in database"""
+        await col.update_one(
+            {"scrape_id": scrape_id},
+            {"$set": {"current_step": step, "last_updated": _utcnow()}},
+        )
+
     try:
         # ── STEP 1: Mark as running ───────────────────────────────────────────
         await col.update_one(
             {"scrape_id": scrape_id},
-            {"$set": {"status": "running", "started_at": _utcnow()}},
+            {"$set": {"status": "running", "started_at": _utcnow(), "current_step": "Fetching page"}},
         )
 
         # ── STEP 2: Fetch main page ───────────────────────────────────────────
+        await update_progress("Fetching page")
         logger.info(f"[orchestrator] {scrape_id} — fetching {url}")
         fetch_result = await fetch_page(url)
 
@@ -100,16 +108,21 @@ async def run_scrape(scrape_id: str, url: str, context_hint: str = "") -> None:
                     f"{fetch_result['word_count']} words via {fetch_result['method_used']}")
 
         # ── STEP 3: Extract sub-page links ────────────────────────────────────
+        await update_progress("Detecting content type")
         sub_urls = extract_relevant_links(main_html, final_url)
         logger.info(f"[orchestrator] {scrape_id} — {len(sub_urls)} sub-pages found")
 
         # ── STEP 4: Extract PDFs ──────────────────────────────────────────────
+        await update_progress("Following sub-pages")
         pdf_results = await extract_pdfs_from_page(main_html, final_url)
         logger.info(f"[orchestrator] {scrape_id} — {len(pdf_results)} PDFs found")
 
         # ── STEP 5: Clean main page first ────────────────────────────────────────
         try:
             main_clean = clean_html(main_html)
+            if not main_clean or len(main_clean) < 100:
+                logger.warning(f"[orchestrator] {scrape_id} — main page cleaning produced minimal content ({len(main_clean)} chars), using raw HTML")
+                main_clean = main_html  # Fallback to raw HTML if cleaning produces nothing
         except Exception as e:
             logger.error(f"[orchestrator] {scrape_id} — failed to clean main HTML: {e}")
             main_clean = main_html  # Fallback to raw HTML if cleaning fails
@@ -120,9 +133,18 @@ async def run_scrape(scrape_id: str, url: str, context_hint: str = "") -> None:
         async def fetch_with_classification(url):
             result = await fetch_page(url)
             if result.get("html"):
-                clean_content = clean_html(result["html"])
-                page_type = classify_page(url, clean_content)
-                return url, result["html"], clean_content, page_type
+                try:
+                    clean_content = clean_html(result["html"])
+                    # Fallback to raw HTML if cleaning produces minimal content
+                    if not clean_content or len(clean_content) < 100:
+                        logger.warning(f"[orchestrator] {scrape_id} — sub-page {url} cleaning produced minimal content, using raw HTML")
+                        clean_content = result["html"]
+                    page_type = classify_page(url, clean_content)
+                    return url, result["html"], clean_content, page_type
+                except Exception as e:
+                    logger.error(f"[orchestrator] {scrape_id} — error cleaning sub-page {url}: {e}")
+                    # Fallback to raw HTML
+                    return url, result["html"], result["html"], "other"
             return url, None, None, "other"
         
         # Process in batches to control concurrency
@@ -135,10 +157,16 @@ async def run_scrape(scrape_id: str, url: str, context_hint: str = "") -> None:
 
         # ── STEP 7: Process results and build text parts ─────────────────────────
         text_parts: list[tuple[str, str]] = []  # (label, cleaned_text)
-        text_parts.append(("MAIN PAGE", main_clean))
+        
+        # Ensure main page content is never empty
+        main_content_to_use = main_clean if main_clean and len(main_clean) >= 100 else main_html
+        if main_content_to_use == main_html:
+            logger.warning(f"[orchestrator] {scrape_id} — using raw main HTML due to insufficient cleaned content")
+        
+        text_parts.append(("MAIN PAGE", main_content_to_use))
         
         sub_pages: list[tuple[str, str]] = []
-        pages_data = [{"url": final_url, "content": main_clean, "page_type": "programme_overview"}]
+        pages_data = [{"url": final_url, "content": main_content_to_use, "page_type": "programme_overview"}]
         
         for result in sub_results:
             if isinstance(result, Exception):
@@ -152,6 +180,7 @@ async def run_scrape(scrape_id: str, url: str, context_hint: str = "") -> None:
                 label = f"{sub_url.split('/')[-1] or sub_url.split('/')[-2] or sub_url} ({page_type})"
                 text_parts.append((label.upper(), sub_clean))
         # ── STEP 8: Process PDFs ─────────────────────────────────────────────────
+        await update_progress("Extracting PDFs")
         pdf_count = 0
         for pdf_r in pdf_results:
             if pdf_r.get("text"):
@@ -161,10 +190,19 @@ async def run_scrape(scrape_id: str, url: str, context_hint: str = "") -> None:
                 pdf_count += 1
 
         combined = combine_texts(text_parts)
+        
+        # Safety check: if combined_text is empty, fall back to raw main page HTML
+        if not combined or not combined.strip():
+            logger.warning(f"[orchestrator] {scrape_id} — combined_text is empty, falling back to raw main page HTML")
+            combined = main_html
+            # Also update pages_data to use raw HTML
+            pages_data[0]["content"] = main_html
 
         # Debug summary
         print(f"\n[DEBUG] Scrape {scrape_id[:8]}...")
         print(f"[DEBUG]   Main page raw:  {len(main_html):,} chars")
+        print(f"[DEBUG]   Main page clean: {len(main_clean):,} chars")
+        print(f"[DEBUG]   Main page used:  {len(main_content_to_use):,} chars ({'raw' if main_content_to_use == main_html else 'cleaned'})")
         print(f"[DEBUG]   Sub-pages:      {len(sub_pages)}")
         print(f"[DEBUG]   PDFs processed: {pdf_count}")
         print(f"[DEBUG]   Combined text:  {len(combined):,} chars")
@@ -175,6 +213,7 @@ async def run_scrape(scrape_id: str, url: str, context_hint: str = "") -> None:
                           [r["url"] for r in pdf_results if r.get("text")]
 
         # ── STEP 9: Single LLM extraction call ───────────────────────────────
+        await update_progress("Running AI extraction")
         logger.info(f"[orchestrator] {scrape_id} — starting extraction")
         extracted = await extract_fields(combined, final_url, context_hint, pages_data)
 
@@ -229,6 +268,7 @@ async def run_scrape(scrape_id: str, url: str, context_hint: str = "") -> None:
         logger.info(f"[orchestrator] {scrape_id} — field_sources: {list(field_sources.keys())}")
 
         # ── STEP 9: Determine status ──────────────────────────────────────────
+        await update_progress("Saving results")
         status = _determine_status(extracted)
 
         # ── STEP 9: Save to MongoDB ───────────────────────────────────────────
@@ -254,6 +294,11 @@ async def run_scrape(scrape_id: str, url: str, context_hint: str = "") -> None:
         await col.update_one(
             {"scrape_id": scrape_id},
             {"$set": update_doc},
+        )
+        # Clear progress step on completion
+        await col.update_one(
+            {"scrape_id": scrape_id},
+            {"$unset": {"current_step": "", "last_updated": ""}},
         )
 
         # ── STEP 10: Log completion ───────────────────────────────────────────

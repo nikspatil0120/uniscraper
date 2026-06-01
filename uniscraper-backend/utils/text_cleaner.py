@@ -5,21 +5,12 @@
 # combine_texts(parts)      — join multiple page texts with section headers
 
 import re
+import logging
 from bs4 import BeautifulSoup
 
+logger = logging.getLogger(__name__)
+
 # ── HTML stripping ────────────────────────────────────────────────────────────
-
-_REMOVE_TAGS = [
-    "script", "style", "noscript", "nav", "footer", "header",
-    "aside", "iframe", "svg", "form", "meta", "link",
-    # NOTE: do NOT remove "button" — accordion toggles wrap section headings
-    # NOTE: do NOT remove divs with hidden/aria-hidden — they contain accordion content
-]
-
-_CONTENT_SELECTORS = [
-    "main", "article", '[role="main"]',
-    ".main-content", "#main-content", ".content", "#content", "body",
-]
 
 _JUNK_LINE_RE = re.compile(r"^[\W\d]+$")
 
@@ -28,38 +19,79 @@ def clean_html(html: str) -> str:
     """
     Parse HTML, strip noise elements, extract main content area,
     return clean readable text suitable for further processing.
-    Explicitly reveals accordion/hidden content so scores in collapsed
-    sections are not lost.
+    Uses a word-count based approach to find the best content container.
     """
     soup = BeautifulSoup(html, "lxml")
 
-    # ── Reveal hidden accordion / tab content before stripping ───────────────
-    # Many university sites hide IELTS/fee tables inside collapsed accordions.
-    # Remove the `hidden` attribute so get_text() captures the content.
-    for tag in soup.find_all(attrs={"hidden": True}):
-        del tag["hidden"]
-    for tag in soup.find_all(attrs={"aria-hidden": "true"}):
-        del tag["aria-hidden"]
-    # Also remove display:none inline styles
-    for tag in soup.find_all(style=re.compile(r"display\s*:\s*none", re.I)):
-        del tag["style"]
+    # ── Step 1: Remove noise tags entirely ───────────────────────────────────
+    for tag in soup.find_all([
+        "script", "style", "noscript", "nav", "footer", 
+        "header", "aside", "iframe", "svg", "form", 
+        "button", "meta", "link", "figure", "picture"
+    ]):
+        tag.decompose()
 
-    for tag_name in _REMOVE_TAGS:
-        for tag in soup.find_all(tag_name):
-            tag.decompose()
+    # ── Step 2: Try content selectors in order, use first that gives > 200 words ──
+    selectors = [
+        "main", "article", '[role="main"]',
+        ".main-content", "#main-content",
+        ".content", "#content", "#main",
+        ".page-content", ".content-wrapper",
+        ".programme-content", "#content-inner",
+        ".col-content", ".entry-content",
+        "section.content", "div.content",
+        "section", "div#wrapper",
+    ]
 
-    # Remove button tags but keep their text (accordion headings)
-    for btn in soup.find_all("button"):
-        btn.replace_with(btn.get_text(separator=" "))
+    best_text = ""
+    matched_selector = None
+    for selector in selectors:
+        el = soup.select_one(selector)
+        if el:
+            text = el.get_text(separator="\n")
+            words = len(text.split())
+            if words > 200:
+                best_text = text
+                matched_selector = selector
+                logger.debug(f"[text_cleaner] Matched selector '{selector}' with {words} words")
+                break
 
-    content_el = None
-    for selector in _CONTENT_SELECTORS:
-        content_el = soup.select_one(selector)
-        if content_el:
-            break
+    # ── Step 3: If no selector worked, fall back to full body ────────────────
+    if len(best_text.split()) < 200:
+        logger.warning(f"[text_cleaner] No selector found >200 words, using body fallback")
+        body = soup.find("body")
+        if body:
+            best_text = body.get_text(separator="\n")
+        else:
+            best_text = soup.get_text(separator="\n")
 
-    raw_text = content_el.get_text(separator="\n") if content_el else soup.get_text(separator="\n")
-    return clean_text_content(raw_text)
+    # ── Step 4: Clean the text ────────────────────────────────────────────────
+    lines = []
+    for line in best_text.split("\n"):
+        line = line.strip()
+        # Skip very short lines
+        if len(line) < 3:
+            continue
+        # Skip lines that are just numbers/punctuation
+        if line.replace(".", "").replace(",", "").replace("-", "").replace(" ", "").isdigit():
+            continue
+        lines.append(line)
+
+    # Collapse multiple blank lines
+    result = []
+    blank_count = 0
+    for line in lines:
+        if not line:
+            blank_count += 1
+            if blank_count <= 1:
+                result.append(line)
+        else:
+            blank_count = 0
+            result.append(line)
+
+    final_text = "\n".join(result)
+    logger.debug(f"[text_cleaner] Final output: {len(final_text)} chars, {len(final_text.split())} words")
+    return final_text
 
 
 # ── Plain-text deep cleaner ───────────────────────────────────────────────────
@@ -155,12 +187,14 @@ def clean_text_content(text: str) -> str:
 # High-priority keywords — paragraphs containing these are kept first
 _HIGH_PRIORITY_KW = re.compile(
     r"(tuition|fee|cost|£|€|\$|USD|GBP|CAD|AUD|"
+    r"international\s+fee|domestic\s+fee|home\s+fee|overseas\s+fee|"
+    r"per\s+year|per\s+annum|annually|"
     r"IELTS|TOEFL|PTE|duolingo|english\s+language|"
     r"deadline|closing\s+date|apply\s+by|"
     r"duration|full.time|part.time|"
     r"GPA|grade\s+point|first.class|2:1|upper\s+second|"
     r"international\s+student|domestic\s+student|home\s+student|"
-    r"per\s+year|per\s+annum|annually|overall\s+score)",
+    r"overall\s+score)",
     re.IGNORECASE,
 )
 

@@ -189,6 +189,9 @@ def extract_regex_hints_from_sections(text: str, section_headers: list = None) -
         generic_sections = []
         
         for header in section_headers:
+            # Defensive check: ensure header is a string
+            if not isinstance(header, str):
+                continue
             if any(term in header.lower() for term in ["program", "course", "admission", "requirement"]):
                 program_sections.append(header)
             else:
@@ -252,7 +255,7 @@ def extract_regex_hints(text: str) -> dict:
 
     # ── Tuition fees ──────────────────────────────────────────────────────────
     # Find fee contexts first, then extract amounts from those contexts
-    fee_contexts = _all_matches(_FEE_CONTEXT, text, max_results=8)
+    fee_contexts = _all_matches(_FEE_CONTEXT, text, max_results=10)  # Increased to capture more fee mentions
     fee_amounts: list[str] = []
     for ctx in fee_contexts:
         for m in _FEE_PATTERN.finditer(ctx):
@@ -262,21 +265,24 @@ def extract_regex_hints(text: str) -> dict:
 
     # Also scan full text for fee amounts
     if not fee_amounts:
-        fee_amounts = _all_matches(_FEE_PATTERN, text, max_results=4)
+        fee_amounts = _all_matches(_FEE_PATTERN, text, max_results=6)  # Increased to capture both fees
 
     hints["fee_amounts"] = fee_amounts if fee_amounts else None
 
     # Try to separately identify domestic vs international fee amounts
+    # Look for more context around each fee type
     domestic_fee = None
     international_fee = None
 
-    for ctx in _all_matches(_DOMESTIC_FEE_CONTEXT, text, max_results=3):
+    # Search for domestic fees with expanded context window
+    for ctx in _all_matches(_DOMESTIC_FEE_CONTEXT, text, max_results=5):
         m = _FEE_PATTERN.search(ctx)
         if m:
             domestic_fee = m.group(0).strip()
             break
 
-    for ctx in _all_matches(_INTERNATIONAL_FEE_CONTEXT, text, max_results=3):
+    # Search for international fees with expanded context window
+    for ctx in _all_matches(_INTERNATIONAL_FEE_CONTEXT, text, max_results=5):
         m = _FEE_PATTERN.search(ctx)
         if m:
             international_fee = m.group(0).strip()
@@ -284,6 +290,10 @@ def extract_regex_hints(text: str) -> dict:
 
     hints["domestic_fee"] = domestic_fee
     hints["international_fee"] = international_fee
+    
+    # Log fee extraction for debugging
+    if domestic_fee or international_fee:
+        logger.info(f"[regex_extractor] fees found - domestic: {domestic_fee}, international: {international_fee}")
 
     # ── Duration ──────────────────────────────────────────────────────────────
     duration = _first_match(_DURATION, text)

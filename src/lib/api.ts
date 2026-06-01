@@ -31,6 +31,8 @@ export interface ScrapeRecord {
   url_requested?: string;
   source_urls?: string[];
   source_count?: number;
+  current_step?: string;  // Real-time progress step from backend
+  last_updated?: string;  // Last progress update timestamp
 
   // Program identity
   university_name?: string | null;

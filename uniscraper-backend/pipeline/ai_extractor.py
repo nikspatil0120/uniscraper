@@ -288,7 +288,13 @@ def calculate_page_relevance_score(page_data: dict, field_group: str) -> int:
     """
     url = page_data.get("url", "").lower()
     page_type = page_data.get("page_type", "other")
-    content = page_data.get("content", "").lower()
+    content = page_data.get("content", "")
+    # Defensive check: ensure content is a string before calling .lower()
+    if isinstance(content, list):
+        content = " ".join(str(item) for item in content)
+    elif not isinstance(content, str):
+        content = str(content)
+    content = content.lower()
 
     score = 50  # base
 
@@ -358,6 +364,8 @@ def build_field_specific_context(pages_data: list, field_group: str, max_chars: 
     Return the most relevant pages for a field group, sorted by score.
     Hard cap: max_chars total. Each page is included in full unless it alone
     exceeds the cap, in which case it is truncated.
+    
+    Special handling for tuition_fees: uses smart truncation to preserve fee information.
     """
     if not pages_data:
         return ""
@@ -372,6 +380,12 @@ def build_field_specific_context(pages_data: list, field_group: str, max_chars: 
     used = 0
     for score, page_data in scored:
         content = page_data.get("content", "")
+        # Defensive check: ensure content is a string
+        if isinstance(content, list):
+            content = " ".join(str(item) for item in content)
+        elif not isinstance(content, str):
+            content = str(content)
+        
         url     = page_data.get("url", "")
         ptype   = page_data.get("page_type", "other")
         header  = f"\n--- {ptype.upper()} (score:{score}) | {url} ---\n"
@@ -384,11 +398,21 @@ def build_field_specific_context(pages_data: list, field_group: str, max_chars: 
             parts.append(header + content)
             used += len(header) + len(content)
         else:
-            # truncate to fit
-            keep = available - len(header) - 30
-            if keep > 500:
-                parts.append(header + content[:keep] + "\n...[truncated]")
-                used = max_chars
+            # For tuition_fees, use smart truncation to preserve fee information
+            if field_group == "tuition_fees":
+                from utils.text_cleaner import truncate_text
+                keep = available - len(header) - 30
+                if keep > 500:
+                    # Smart truncate preserves fee-related content
+                    truncated_content = truncate_text(content, keep)
+                    parts.append(header + truncated_content)
+                    used += len(header) + len(truncated_content)
+            else:
+                # Standard truncation for other fields
+                keep = available - len(header) - 30
+                if keep > 500:
+                    parts.append(header + content[:keep] + "\n...[truncated]")
+                    used = max_chars
             break
 
         if len(parts) >= 3:
@@ -426,10 +450,11 @@ async def extract_fields(
 
     # ── Step 2: Field-specific context building ──────────────────────────────
     if pages_data:
-        # Each field gets its own ranked page selection — 5000 chars each
+        # Each field gets its own ranked page selection
+        # Fees get more space (8000 chars) to ensure both domestic and international fees are captured
         program_context  = build_field_specific_context(pages_data, "program_duration",      5000)
         english_context  = build_field_specific_context(pages_data, "english_requirements",  5000)
-        fees_context     = build_field_specific_context(pages_data, "tuition_fees",          5000)
+        fees_context     = build_field_specific_context(pages_data, "tuition_fees",          8000)  # Increased for complete fee info
         admission_context= build_field_specific_context(pages_data, "application_deadlines", 5000)
 
         extraction_text = "\n\n".join(filter(None, [
@@ -439,7 +464,7 @@ async def extract_fields(
             "=== ADMISSION DETAILS ===\n"    + admission_context,
         ])).strip()
 
-        print(f"[ROUTING] Built targeted context: {len(extraction_text)} chars")
+        print(f"[ROUTING] Built targeted context: {len(extraction_text)} chars (fees: {len(fees_context)} chars)")
     else:
         sections = classify_text_sections(cleaned, primary_url)
         admission_focused = get_admission_focused_text(sections)
@@ -452,6 +477,11 @@ async def extract_fields(
     if "===" in extraction_text:
         section_headers = [line.strip() for line in extraction_text.split('\n') 
                           if line.strip().startswith('===') and line.strip().endswith('===')]
+        # Debug: check for any non-string headers
+        for i, header in enumerate(section_headers):
+            if not isinstance(header, str):
+                print(f"[DEBUG] Non-string header at index {i}: {type(header)} = {header}")
+                section_headers[i] = str(header)  # Convert to string
     
     hints = extract_regex_hints_from_sections(extraction_text, section_headers)
     hints_block = format_hints_for_prompt(hints)

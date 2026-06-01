@@ -120,6 +120,26 @@ async def fetch_page(url: str) -> dict:
 
     Always returns a dict — never raises an exception.
     """
+    # Force Playwright for known JS-heavy sites
+    force_playwright_domains = [
+        "study.ed.ac.uk",      # Edinburgh - heavy React/JS rendering
+        "ox.ac.uk",            # Oxford - some pages are JS-heavy
+        "study.unimelb.edu.au", # Melbourne - Cloudflare protection
+        # Note: McGill removed - text cleaner fix handles it well via httpx
+    ]
+    
+    use_playwright_first = any(domain in url for domain in force_playwright_domains)
+    
+    if use_playwright_first:
+        logger.info(f"[fetcher] {url} — using Playwright (JS-heavy site)")
+        try:
+            pw_result = await _fetch_with_playwright(url)
+            logger.info(f"[fetcher] {url} — playwright OK, {pw_result['word_count']} words")
+            return pw_result
+        except Exception as e:
+            logger.warning(f"[fetcher] {url} — Playwright failed ({e}), falling back to httpx...")
+            # Fall through to httpx as backup
+    
     logger.info(f"[fetcher] {url} — trying httpx...")
 
     # --- Attempt 1: httpx ---
