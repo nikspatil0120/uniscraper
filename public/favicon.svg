@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Dark background -->
+  <rect width="32" height="32" rx="7" fill="#0A0A0F"/>
+  <!-- Accent ring -->
+  <rect width="32" height="32" rx="7" fill="none" stroke="#00FF94" stroke-width="1.5" opacity="0.3"/>
+  <!-- Stylized "U" shape -->
+  <path d="M9 8 L9 19 Q9 24 16 24 Q23 24 23 19 L23 8" stroke="#00FF94" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Scan line accent -->
+  <line x1="12" y1="28" x2="20" y2="28" stroke="#00FF94" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+</svg>
