@@ -136,13 +136,26 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
     .flatMap((s) => s.fields)
     .filter((f) => !fmt(f.value).missing).length;
 
+  const getSanitizedFilename = (ext: string) => {
+    const uni = data.university_name || "university";
+    const prog = data.program_name || "program";
+    const name = `${uni}_${prog}`
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, "_")
+      .replace(/__+/g, "_")
+      .trim();
+    return `${name || data.scrape_id}.${ext}`;
+  };
+
   const downloadJson = () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${data.scrape_id}.json`;
+    a.download = getSanitizedFilename("json");
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
@@ -150,12 +163,14 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
     const rows = sections
       .flatMap((s) => s.fields)
       .map((f) => [f.label, fmt(f.value).text].map((c) => `"${c.replace(/"/g, '""')}"`).join(","));
-    const blob = new Blob([["field,value", ...rows].join("\n")], { type: "text/csv" });
+    const blob = new Blob(["\ufeff", ["field,value", ...rows].join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${data.scrape_id}.csv`;
+    a.download = getSanitizedFilename("csv");
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
