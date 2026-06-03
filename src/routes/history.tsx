@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Trash2, X } from "lucide-react";
+import { Search, Trash2, X, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { TopBar } from "@/components/TopBar";
@@ -259,7 +259,41 @@ function HistoryPage() {
                     {row.degree_level ? <Badge>{row.degree_level}</Badge> : <NotFound />}
                   </td>
                   <td style={{ padding: "14px 16px" }}>
-                    <StatusBadge status={row.status} />
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={row.status} />
+                      {row.error && (
+                        <div
+                          className="group relative"
+                          style={{ display: "inline-flex", alignItems: "center" }}
+                        >
+                          <AlertCircle
+                            size={14}
+                            style={{ color: "var(--error)", cursor: "help" }}
+                          />
+                          <div
+                            className="absolute left-0 top-full mt-2 hidden group-hover:block z-10 w-64 p-3 rounded-lg"
+                            style={{
+                              background: "var(--bg-raised)",
+                              border: "1px solid var(--border)",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                            }}
+                          >
+                            <div
+                              className="font-ui uppercase text-[9px] tracking-widest-2 mb-1"
+                              style={{ color: "var(--error)" }}
+                            >
+                              ERROR
+                            </div>
+                            <div
+                              className="font-mono text-[11px]"
+                              style={{ color: "var(--text-primary)", lineHeight: "1.5" }}
+                            >
+                              {row.error}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td
                     className="font-mono text-[12px]"

@@ -37,6 +37,38 @@ def _count_words(html: str) -> int:
         return 0
 
 
+def _is_cloudflare_protected(html: str, url: str = "") -> bool:
+    """
+    Detect if a page is protected by Cloudflare or similar protection.
+    Returns True if protection is detected.
+    """
+    if not html:
+        return False
+    
+    html_lower = html.lower()
+    
+    # Common Cloudflare indicators
+    cloudflare_indicators = [
+        "checking your browser",
+        "cloudflare",
+        "cf-browser-verification",
+        "cf_clearance",
+        "challenge-platform",
+        "ray id:",
+        "enable cookies",
+        "please enable cookies",
+        "security check",
+        "ddos protection",
+        "attention required",
+        "just a moment",
+    ]
+    
+    # Check for multiple indicators (need at least 2 for higher confidence)
+    matches = sum(1 for indicator in cloudflare_indicators if indicator in html_lower)
+    
+    return matches >= 2
+
+
 async def _fetch_with_httpx(url: str) -> dict:
     """Attempt to fetch the page with httpx. Returns result dict."""
     async with httpx.AsyncClient(
@@ -49,6 +81,18 @@ async def _fetch_with_httpx(url: str) -> dict:
         final_url = str(response.url)
         status_code = response.status_code
         word_count = _count_words(html)
+        
+        # Check for Cloudflare protection
+        if _is_cloudflare_protected(html, url):
+            return {
+                "html": None,
+                "method_used": "httpx",
+                "status_code": status_code,
+                "final_url": final_url,
+                "word_count": 0,
+                "error": "Site is protected by Cloudflare or similar anti-bot protection",
+            }
+        
         return {
             "html": html,
             "method_used": "httpx",
@@ -62,7 +106,7 @@ async def _fetch_with_httpx(url: str) -> dict:
 async def _fetch_with_playwright(url: str) -> dict:
     """Fetch the page using a headless Chromium browser via Playwright."""
     import os
-    from playwright.async_api import async_playwright
+    from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout
 
     # Verify Chromium is installed before attempting launch
     possible_paths = [
@@ -95,12 +139,30 @@ async def _fetch_with_playwright(url: str) -> dict:
                 java_script_enabled=True,
             )
             page = await context.new_page()
-            await page.goto(url, timeout=_PLAYWRIGHT_TIMEOUT, wait_until="networkidle")
-            # Extra wait for heavy SPAs that render after networkidle
-            await page.wait_for_timeout(2000)
+            
+            try:
+                await page.goto(url, timeout=_PLAYWRIGHT_TIMEOUT, wait_until="networkidle")
+                # Extra wait for heavy SPAs that render after networkidle
+                await page.wait_for_timeout(2000)
+            except PlaywrightTimeout:
+                # If networkidle times out, try to get whatever is loaded
+                logger.warning(f"[fetcher] Playwright timeout waiting for networkidle on {url}")
+            
             html = await page.content()
             final_url = page.url
             word_count = _count_words(html)
+            
+            # Check for Cloudflare protection
+            if _is_cloudflare_protected(html, url):
+                return {
+                    "html": None,
+                    "method_used": "playwright",
+                    "status_code": None,
+                    "final_url": final_url,
+                    "word_count": 0,
+                    "error": "Site is protected by Cloudflare or similar anti-bot protection",
+                }
+            
             return {
                 "html": html,
                 "method_used": "playwright",

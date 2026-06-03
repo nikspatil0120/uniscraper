@@ -179,6 +179,27 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
       className="slide-up rounded-xl flex flex-col"
       style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}
     >
+      {/* Error Banner - if scrape failed */}
+      {data.error && (
+        <div
+          className="px-6 py-4 flex items-start gap-3"
+          style={{
+            background: "var(--error-dim)",
+            borderBottom: "1px solid var(--border)",
+          }}
+        >
+          <div
+            className="font-ui uppercase text-[10px] tracking-widest-2 flex-1"
+            style={{ color: "var(--error)", lineHeight: "1.6" }}
+          >
+            <div className="font-bold mb-1">SCRAPING FAILED</div>
+            <div className="font-mono normal-case text-[11px]" style={{ color: "var(--text-primary)" }}>
+              {data.error}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="p-6 flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
