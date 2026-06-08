@@ -25,7 +25,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
 import database
-from routers import scrape, history, batch, export
+# Router imports can pull in heavy pipeline modules (Playwright, pdfplumber, etc.)
+# which may not be installed in a lightweight dev environment. Import routers
+# lazily below and register them only if available so the health endpoint can
+# run without all native deps.
 
 logging.basicConfig(level=getattr(logging, settings.log_level.upper(), logging.INFO))
 logger = logging.getLogger(__name__)
@@ -57,10 +60,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(scrape.router, prefix="/api/v1")
-app.include_router(history.router, prefix="/api/v1")
-app.include_router(batch.router, prefix="/api/v1")
-app.include_router(export.router, prefix="/api/v1")
+# Try to import and mount routers. If any import fails (missing optional deps),
+# log a warning and continue — the health endpoint will still work.
+try:
+    import importlib
+
+    scrape = importlib.import_module("routers.scrape")
+    history = importlib.import_module("routers.history")
+    batch = importlib.import_module("routers.batch")
+    export = importlib.import_module("routers.export")
+
+    app.include_router(scrape.router, prefix="/api/v1")
+    app.include_router(history.router, prefix="/api/v1")
+    app.include_router(batch.router, prefix="/api/v1")
+    app.include_router(export.router, prefix="/api/v1")
+except Exception as e:
+    logger.warning("Some routers failed to import; running in limited mode: %s", e)
 
 
 @app.get("/health", tags=["meta"])

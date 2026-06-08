@@ -10,7 +10,6 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException
 
 import database
 from models.scrape_request import ScrapeRequest
-from pipeline.orchestrator import run_scrape
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["scrape"])
@@ -81,6 +80,11 @@ async def start_scrape(request: ScrapeRequest, background_tasks: BackgroundTasks
 
     await database.scrape_results_collection.insert_one(initial_doc)
     logger.info(f"[scrape] queued {scrape_id} for {url_str}")
+
+    # Defer importing the orchestration pipeline (which pulls in heavy deps like Playwright)
+    # until we actually enqueue a background scrape. This lets the FastAPI app start in
+    # development without installing all native dependencies.
+    from pipeline.orchestrator import run_scrape
 
     background_tasks.add_task(run_scrape, scrape_id, url_str, request.context_hint or "")
 

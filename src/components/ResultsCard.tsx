@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Download, FileJson, Link as LinkIcon, ChevronDown } from "lucide-react";
+import { Download, FileJson, Link as LinkIcon, ChevronDown, CheckCircle2 } from "lucide-react";
 import { fmt, getEnglish, getFees, type ScrapeRecord } from "@/lib/api";
 
 interface Field {
@@ -16,23 +16,30 @@ interface Section {
 function FieldBlock({ field }: { field: Field }) {
   const { text, missing } = fmt(field.value);
   const accent = !missing;
+  
   return (
     <div
-      className="px-4 py-3 transition-colors cursor-default"
+      className="px-4 py-3.5 transition-all duration-200 cursor-default rounded-lg border border-transparent"
       style={{
-        borderLeft: `2px solid ${accent ? "var(--accent)" : "var(--border)"}`,
+        borderLeft: `2.5px solid ${accent ? "var(--accent)" : "rgba(255, 255, 255, 0.03)"}`,
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
-      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "rgba(255, 255, 255, 0.015)";
+        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.02)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "transparent";
+        e.currentTarget.style.borderColor = "transparent";
+      }}
     >
       <div
-        className="font-ui uppercase text-[9px] tracking-widest-2 mb-1.5"
-        style={{ color: "var(--text-muted)" }}
+        className="font-ui uppercase text-[8.5px] font-bold tracking-widest-2 mb-1.5"
+        style={{ color: "var(--text-muted)", opacity: 0.8 }}
       >
         {field.label}
       </div>
       <div
-        className={missing ? "italic text-[13px]" : "font-mono text-[13px]"}
+        className={missing ? "italic text-[12.5px]" : "font-mono text-[12.5px]"}
         style={{
           color: missing
             ? "var(--text-muted)"
@@ -40,6 +47,7 @@ function FieldBlock({ field }: { field: Field }) {
               ? "var(--warning)"
               : "var(--text-primary)",
           wordBreak: "break-word",
+          lineHeight: 1.5,
         }}
       >
         {text}
@@ -56,14 +64,20 @@ function Badge({
   tone?: "accent" | "warn" | "error";
 }) {
   const colors = {
-    accent: { bg: "var(--accent-dim)", fg: "var(--accent)" },
-    warn: { bg: "var(--warning-dim)", fg: "var(--warning)" },
-    error: { bg: "var(--error-dim)", fg: "var(--error)" },
+    accent: { bg: "rgba(229, 143, 101, 0.06)", fg: "var(--accent)", border: "rgba(229, 143, 101, 0.15)" },
+    warn: { bg: "rgba(226, 175, 112, 0.06)", fg: "var(--warning)", border: "rgba(226, 175, 112, 0.15)" },
+    error: { bg: "rgba(208, 112, 112, 0.06)", fg: "var(--error)", border: "rgba(208, 112, 112, 0.15)" },
   }[tone];
+
   return (
     <span
-      className="font-mono text-[10px] uppercase px-2.5 py-1 rounded-full inline-block"
-      style={{ background: colors.bg, color: colors.fg, letterSpacing: "0.05em" }}
+      className="font-ui text-[10px] uppercase font-bold px-3 py-1 rounded-md inline-block border"
+      style={{ 
+        background: colors.bg, 
+        color: colors.fg, 
+        borderColor: colors.border,
+        letterSpacing: "0.08em" 
+      }}
     >
       {children}
     </span>
@@ -96,7 +110,7 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
         ],
       },
       {
-        title: "Language",
+        title: "Language Requirements",
         fields: [
           { label: "IELTS", value: eng.ielts },
           { label: "TOEFL", value: eng.toefl },
@@ -106,7 +120,7 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
         ],
       },
       {
-        title: "Fees",
+        title: "Tuition & Fees",
         fields: [
           { label: "International tuition", value: fees.international },
           { label: "Domestic tuition", value: fees.domestic },
@@ -116,13 +130,13 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
         ],
       },
       {
-        title: "Opportunities",
+        title: "Scholarships & Opportunities",
         fields: [
           { label: "Scholarships", value: data.scholarships },
         ],
       },
       {
-        title: "Other",
+        title: "Additional Criteria",
         fields: [
           { label: "Other requirements", value: data.other_requirements },
           { label: "Confidence notes", value: data.confidence_notes, warn: true },
@@ -176,23 +190,26 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
 
   return (
     <div
-      className="slide-up rounded-xl flex flex-col"
-      style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}
+      className="slide-up rounded-xl flex flex-col glass-panel-raised"
+      style={{ 
+        boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
+        border: "1px solid rgba(255, 255, 255, 0.04)"
+      }}
     >
-      {/* Error Banner - if scrape failed */}
+      {/* Error Banner - if compile failed */}
       {data.error && (
         <div
-          className="px-6 py-4 flex items-start gap-3"
+          className="px-6 py-4 flex items-start gap-3 rounded-t-xl"
           style={{
-            background: "var(--error-dim)",
-            borderBottom: "1px solid var(--border)",
+            background: "rgba(208, 112, 112, 0.08)",
+            borderBottom: "1px solid rgba(208, 112, 112, 0.15)",
           }}
         >
           <div
             className="font-ui uppercase text-[10px] tracking-widest-2 flex-1"
             style={{ color: "var(--error)", lineHeight: "1.6" }}
           >
-            <div className="font-bold mb-1">SCRAPING FAILED</div>
+            <div className="font-bold mb-1">COMPILATION FAILED</div>
             <div className="font-mono normal-case text-[11px]" style={{ color: "var(--text-primary)" }}>
               {data.error}
             </div>
@@ -201,46 +218,61 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
       )}
 
       {/* Header */}
-      <div className="p-6 flex items-start justify-between gap-4">
+      <div className="p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="min-w-0 flex-1">
-          <div className="font-display text-[26px] leading-tight text-text-primary">
+          <h2 className="font-display text-[28px] font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
             {fmt(data.university_name).missing ? "Unknown University" : data.university_name}
-          </div>
+          </h2>
           <div
-            className="font-ui uppercase text-[13px] tracking-widest-2 mt-2"
+            className="font-ui uppercase text-[12px] font-semibold tracking-widest-2 mt-2"
             style={{ color: "var(--text-secondary)" }}
           >
-            {fmt(data.program_name).missing ? "— program not found" : data.program_name}
+            {fmt(data.program_name).missing ? "— Program Details Unavailable" : data.program_name}
           </div>
-          <div className="flex flex-wrap gap-2 mt-3">
+          <div className="flex flex-wrap gap-2 mt-4">
             {!fmt(data.degree_level).missing && <Badge>{data.degree_level}</Badge>}
             {!fmt(data.program_duration).missing && <Badge>{data.program_duration}</Badge>}
           </div>
         </div>
+        
+        {/* Metric Pill */}
         <div
-          className="font-mono text-[10px] uppercase whitespace-nowrap"
-          style={{ color: "var(--text-muted)" }}
+          className="flex items-center gap-2 self-start md:self-center px-4 py-2 rounded-lg"
+          style={{
+            background: "rgba(255, 255, 255, 0.01)",
+            border: "1px solid rgba(255, 255, 255, 0.03)",
+          }}
         >
-          Extracted {extractedCount} fields
+          <CheckCircle2 size={13} style={{ color: "var(--accent)" }} />
+          <span className="font-ui uppercase text-[10px] font-bold tracking-widest text-text-secondary">
+            Compiled <span className="font-mono text-accent text-[11px]">{extractedCount}</span> fields
+          </span>
         </div>
       </div>
 
       <div style={{ borderTop: "1px solid var(--border)" }} />
 
       {/* Sections */}
-      <div className="flex-1">
-        {sections.map((sec, i) => (
-          <div key={sec.title}>
-            {i > 0 && <div style={{ borderTop: "1px solid var(--border)" }} />}
-            <div className="px-6 pt-5 pb-3">
+      <div className="flex-1 p-4 flex flex-col gap-6">
+        {sections.map((sec) => (
+          <div 
+            key={sec.title}
+            className="rounded-lg p-4"
+            style={{
+              background: "rgba(255, 255, 255, 0.005)",
+              border: "1px solid rgba(255, 255, 255, 0.01)"
+            }}
+          >
+            <div className="px-2 pb-3 mb-2 flex items-center gap-2 border-b border-white/[0.01]">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent" />
               <div
-                className="font-ui uppercase text-[10px] tracking-widest-2"
+                className="font-ui uppercase text-[9.5px] font-bold tracking-widest-2"
                 style={{ color: "var(--text-muted)" }}
               >
                 {sec.title}
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-1 px-4 pb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
               {sec.fields.map((f) => (
                 <FieldBlock key={f.label} field={f} />
               ))}
@@ -252,19 +284,18 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
       {/* Sources (expandable) */}
       {sourcesOpen && sources.length > 0 && (
         <div
-          className="px-6 py-4 max-h-44 overflow-y-auto"
-          style={{ borderTop: "1px solid var(--border)", background: "var(--bg-base)" }}
+          className="px-8 py-5 max-h-44 overflow-y-auto"
+          style={{ borderTop: "1px solid var(--border)", background: "rgba(20, 18, 17, 0.3)" }}
         >
-          <ul className="space-y-1.5">
+          <ul className="space-y-2">
             {sources.map((s) => (
-              <li key={s} className="flex items-center gap-2">
-                <LinkIcon size={11} style={{ color: "var(--text-muted)" }} />
+              <li key={s} className="flex items-center gap-2.5">
+                <LinkIcon size={10} style={{ color: "var(--text-muted)" }} />
                 <a
                   href={s}
                   target="_blank"
                   rel="noreferrer"
-                  className="font-mono text-[11px] truncate hover:underline"
-                  style={{ color: "var(--text-secondary)" }}
+                  className="font-mono text-[11px] truncate text-text-secondary hover:text-accent hover:underline transition-colors"
                 >
                   {s}
                 </a>
@@ -276,42 +307,70 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
 
       {/* Bottom bar */}
       <div
-        className="flex items-center justify-between px-6 py-4"
+        className="flex items-center justify-between px-8 py-4 rounded-b-xl"
         style={{
-          background: "var(--bg-surface)",
+          background: "rgba(28, 25, 23, 0.4)",
           borderTop: "1px solid var(--border)",
         }}
       >
         <button
           onClick={() => setSourcesOpen((v) => !v)}
-          className="font-ui uppercase text-[10px] tracking-widest-2 flex items-center gap-1.5 transition-colors"
-          style={{ color: "var(--text-secondary)" }}
+          className="font-ui uppercase text-[9.5px] font-bold tracking-widest-2 flex items-center gap-2 transition-all duration-200 text-text-secondary hover:text-text-primary"
         >
           <ChevronDown
             size={12}
             style={{
               transform: sourcesOpen ? "rotate(180deg)" : "rotate(0deg)",
               transition: "transform 200ms",
+              color: "var(--accent)"
             }}
           />
           Sources ({sources.length})
         </button>
+        
         <div className="flex gap-2">
           <button
             onClick={downloadJson}
-            className="font-ui uppercase text-[10px] tracking-widest-2 flex items-center gap-1.5 px-3 py-2 rounded-md transition-colors"
-            style={{ color: "var(--text-secondary)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
+            className="font-ui uppercase text-[9.5px] font-bold tracking-widest-2 flex items-center gap-2 px-3.5 py-2 rounded-lg transition-all duration-300 border border-transparent"
+            style={{ 
+              color: "var(--text-secondary)",
+              background: "rgba(255, 255, 255, 0.01)"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--accent)";
+              e.currentTarget.style.background = "rgba(229, 143, 101, 0.05)";
+              e.currentTarget.style.borderColor = "rgba(229, 143, 101, 0.15)";
+              e.currentTarget.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--text-secondary)";
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.01)";
+              e.currentTarget.style.borderColor = "transparent";
+              e.currentTarget.style.transform = "";
+            }}
           >
             <FileJson size={12} /> JSON
           </button>
+          
           <button
             onClick={downloadCsv}
-            className="font-ui uppercase text-[10px] tracking-widest-2 flex items-center gap-1.5 px-3 py-2 rounded-md transition-colors"
-            style={{ color: "var(--text-secondary)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
+            className="font-ui uppercase text-[9.5px] font-bold tracking-widest-2 flex items-center gap-2 px-3.5 py-2 rounded-lg transition-all duration-300 border border-transparent"
+            style={{ 
+              color: "var(--text-secondary)",
+              background: "rgba(255, 255, 255, 0.01)"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--accent)";
+              e.currentTarget.style.background = "rgba(229, 143, 101, 0.05)";
+              e.currentTarget.style.borderColor = "rgba(229, 143, 101, 0.15)";
+              e.currentTarget.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--text-secondary)";
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.01)";
+              e.currentTarget.style.borderColor = "transparent";
+              e.currentTarget.style.transform = "";
+            }}
           >
             <Download size={12} /> CSV
           </button>
@@ -323,7 +382,7 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
 
 export function StatusBadge({ status }: { status: string }) {
   const tone = status === "success" ? "accent" : status === "failed" ? "error" : "warn";
-  return <Badge tone={tone as "accent" | "warn" | "error"}>{status}</Badge>;
+  return <Badge tone={tone as "accent" | "warn" | "error"}>{status === "success" ? "compiled" : status === "failed" ? "failed" : "partial"}</Badge>;
 }
 
 export { Badge };

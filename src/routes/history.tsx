@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Trash2, X, AlertCircle } from "lucide-react";
+import { Search, Trash2, X, AlertCircle, FileSpreadsheet, FileCode } from "lucide-react";
 import { toast } from "sonner";
 
 import { TopBar } from "@/components/TopBar";
@@ -13,8 +13,8 @@ import { formatToIST } from "@/lib/utils";
 export const Route = createFileRoute("/history")({
   head: () => ({
     meta: [
-      { title: "History — UniScraper" },
-      { name: "description", content: "Browse, search, and export past university scrapes." },
+      { title: "Archive — UniScraper" },
+      { name: "description", content: "Browse, search, and export compiled university programs." },
     ],
   }),
   component: HistoryPage,
@@ -36,11 +36,12 @@ function HistoryPage() {
       const a = document.createElement("a");
       a.href = url;
       const today = new Date().toISOString().split("T")[0];
-      a.download = `uniscraper_export_${today}.csv`;
+      a.download = `uniscraper_archive_${today}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      toast.success("CSV Export downloaded");
     } catch (err) {
       toast.error("CSV Export failed");
     }
@@ -56,11 +57,12 @@ function HistoryPage() {
       const a = document.createElement("a");
       a.href = url;
       const today = new Date().toISOString().split("T")[0];
-      a.download = `uniscraper_export_${today}.json`;
+      a.download = `uniscraper_archive_${today}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      toast.success("JSON Export downloaded");
     } catch (err) {
       toast.error("JSON Export failed");
     }
@@ -80,7 +82,7 @@ function HistoryPage() {
   const del = useMutation({
     mutationFn: api.deleteScrape,
     onSuccess: () => {
-      toast.success("Deleted");
+      toast.success("Archive deleted");
       qc.invalidateQueries({ queryKey: ["scrapes"] });
     },
     onError: () => toast.error("Delete failed"),
@@ -100,111 +102,147 @@ function HistoryPage() {
   const totalPages = Math.max(1, list.data?.pages ?? 1);
 
   return (
-    <div className="page-in">
-      <TopBar title="History" />
+    <div className="page-in min-h-screen flex flex-col" style={{ background: "#FFFCF9" }}>
+      <TopBar title="Program Archive" />
 
-      <div className="px-10 py-8">
-        <div className="flex flex-wrap items-center gap-3 mb-8">
-          <div className="relative flex-1 min-w-[240px]">
+      <div className="px-10 py-8 flex-1 flex flex-col gap-6 max-w-[1300px] w-full mx-auto">
+
+        {/* Controls Header */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
+
+          {/* Search bar */}
+          <div className="relative flex-1 min-w-[280px] max-w-md">
             <Search
-              size={14}
+              size={13}
               className="absolute left-4 top-1/2 -translate-y-1/2"
-              style={{ color: "var(--text-muted)" }}
+              style={{ color: "#C4B5AA" }}
             />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search university or program..."
-              className="w-full font-mono text-[13px] rounded-lg pl-10 pr-4 py-3 focus-glow"
+              placeholder="Search archive by university or course..."
+              className="w-full font-ui text-[12.5px] rounded-lg pl-10 pr-4 py-3 transition-all duration-300 focus:outline-none"
               style={{
-                background: "var(--bg-raised)",
-                color: "var(--text-primary)",
-                border: "1px solid transparent",
+                background: "#FFFFFF",
+                color: "#2C1F17",
+                border: "1px solid #E8DDD4",
+                boxShadow: "inset 0 1px 3px rgba(0,0,0,0.04)",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "#C25520";
+                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(194, 85, 32, 0.08), inset 0 1px 3px rgba(0,0,0,0.04)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "#E8DDD4";
+                e.currentTarget.style.boxShadow = "inset 0 1px 3px rgba(0,0,0,0.04)";
               }}
             />
           </div>
+
+          {/* Export Actions */}
           <div className="flex gap-2">
             <a
               href={api.exportCsvUrl()}
               onClick={handleExportAllCsv}
-              className="font-ui uppercase text-[11px] tracking-widest-2 px-4 py-3 rounded-lg transition-all"
+              className="font-ui uppercase text-[10px] font-bold tracking-widest-2 px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-2 border"
               style={{
-                border: "1px solid var(--accent)",
-                color: "var(--accent)",
-                background: "transparent",
+                borderColor: "#F5C9A8",
+                color: "#C25520",
+                background: "#FEF3EC",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--accent-dim)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#FDE8D4";
+                e.currentTarget.style.borderColor = "#EFA882";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#FEF3EC";
+                e.currentTarget.style.borderColor = "#F5C9A8";
+                e.currentTarget.style.transform = "";
+              }}
             >
-              Export All CSV
+              <FileSpreadsheet size={13} /> Export All CSV
             </a>
+
             <a
               href={api.exportJsonUrl()}
               onClick={handleExportAllJson}
-              className="font-ui uppercase text-[11px] tracking-widest-2 px-4 py-3 rounded-lg transition-all"
+              className="font-ui uppercase text-[10px] font-bold tracking-widest-2 px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-2 border"
               style={{
-                border: "1px solid var(--accent)",
-                color: "var(--accent)",
-                background: "transparent",
+                borderColor: "#E8DDD4",
+                color: "#9E9189",
+                background: "#F5F0EA",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--accent-dim)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#EDE5DC";
+                e.currentTarget.style.borderColor = "#D4C9BD";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#F5F0EA";
+                e.currentTarget.style.borderColor = "#E8DDD4";
+                e.currentTarget.style.transform = "";
+              }}
             >
-              Export All JSON
+              <FileCode size={13} /> Export All JSON
             </a>
           </div>
         </div>
 
-        {/* Table */}
+        {/* Table Container */}
         <div
-          className="rounded-xl"
-          style={{ border: "1px solid var(--border)", overflow: "hidden" }}
+          className="rounded-xl overflow-hidden"
+          style={{
+            border: "1px solid #E8DDD4",
+            background: "#FFFFFF",
+            boxShadow: "0 4px 16px rgba(44, 31, 23, 0.06)",
+          }}
         >
           <table style={{ width: "100%", tableLayout: "fixed", borderCollapse: "collapse" }}>
             <colgroup>
-              <col style={{ width: "28%" }} />
-              <col style={{ width: "32%" }} />
+              <col style={{ width: "30%" }} />
+              <col style={{ width: "30%" }} />
               <col style={{ width: "12%" }} />
-              <col style={{ width: "14%" }} />
-              <col style={{ width: "14%" }} />
+              <col style={{ width: "13%" }} />
+              <col style={{ width: "15%" }} />
             </colgroup>
             <thead>
-              <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                {["University", "Program", "Level", "Status", "Date"].map((h) => (
+              <tr style={{ borderBottom: "1px solid #EDE5DC", background: "#FBF7F3" }}>
+                {["University", "Program", "Degree", "Status", "Date Compiled"].map((h) => (
                   <th
                     key={h}
-                    className="font-ui uppercase text-[10px] tracking-widest-2"
+                    className="font-ui uppercase text-[9px] font-bold tracking-widest-2"
                     style={{
-                      color: "var(--text-muted)",
-                      padding: "12px 16px",
+                      color: "#C4B5AA",
+                      padding: "16px 20px",
                       textAlign: "left",
-                      fontWeight: 400,
+                      fontWeight: 700,
                     }}
                   >
                     {h}
                   </th>
                 ))}
-                <th style={{ width: 80, padding: "12px 16px" }} />
+                <th style={{ width: 90, padding: "16px 20px" }} />
               </tr>
             </thead>
             <tbody>
               {list.isLoading &&
                 Array.from({ length: 6 }).map((_, i) => (
-                  <tr key={i}>
-                    <td style={{ padding: "14px 16px" }}>
-                      <div className="shimmer" style={{ width: "80%", height: 16, borderRadius: 4 }} />
-                    </td>
-                    <td style={{ padding: "14px 16px" }}>
-                      <div className="shimmer" style={{ width: "75%", height: 14, borderRadius: 4 }} />
-                    </td>
-                    <td style={{ padding: "14px 16px" }}>
-                      <div className="shimmer" style={{ width: 52, height: 22, borderRadius: 999 }} />
-                    </td>
-                    <td style={{ padding: "14px 16px" }}>
-                      <div className="shimmer" style={{ width: 60, height: 22, borderRadius: 999 }} />
-                    </td>
-                    <td style={{ padding: "14px 16px" }}>
+                  <tr key={i} style={{ borderBottom: "1px solid #EDE5DC" }}>
+                    <td style={{ padding: "18px 20px" }}>
                       <div className="shimmer" style={{ width: "80%", height: 14, borderRadius: 4 }} />
+                    </td>
+                    <td style={{ padding: "18px 20px" }}>
+                      <div className="shimmer" style={{ width: "70%", height: 12, borderRadius: 4 }} />
+                    </td>
+                    <td style={{ padding: "18px 20px" }}>
+                      <div className="shimmer" style={{ width: 50, height: 20, borderRadius: 6 }} />
+                    </td>
+                    <td style={{ padding: "18px 20px" }}>
+                      <div className="shimmer" style={{ width: 60, height: 20, borderRadius: 6 }} />
+                    </td>
+                    <td style={{ padding: "18px 20px" }}>
+                      <div className="shimmer" style={{ width: "85%", height: 12, borderRadius: 4 }} />
                     </td>
                     <td />
                   </tr>
@@ -212,23 +250,18 @@ function HistoryPage() {
 
               {!list.isLoading && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} style={{ padding: "80px 24px", textAlign: "center" }}>
+                  <td colSpan={6} style={{ padding: "100px 24px", textAlign: "center" }}>
                     <div
-                      className="font-display italic"
-                      style={{ fontSize: 22, color: "#4A4958" }}
+                      className="font-display italic text-[24px]"
+                      style={{ color: "#C4B5AA" }}
                     >
-                      No scrapes yet
+                      Archive Empty
                     </div>
                     <div
-                      className="font-ui uppercase"
-                      style={{
-                        fontSize: 11,
-                        letterSpacing: "0.12em",
-                        color: "#4A4958",
-                        marginTop: 8,
-                      }}
+                      className="font-ui uppercase text-[10px] tracking-widest-2 mt-3"
+                      style={{ color: "#D4C9BD" }}
                     >
-                      Run your first scrape to see results here
+                      Process a program page on the dashboard to generate records
                     </div>
                   </td>
                 </tr>
@@ -237,28 +270,32 @@ function HistoryPage() {
               {filtered.map((row: ScrapeRecord, i) => (
                 <tr
                   key={row.scrape_id}
-                  style={{ background: i % 2 === 0 ? "var(--bg-surface)" : "transparent", cursor: "default" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                  className="transition-colors duration-200"
+                  style={{
+                    background: i % 2 === 0 ? "#FDFAF7" : "#FFFFFF",
+                    borderBottom: "1px solid #EDE5DC",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#FEF3EC")}
                   onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = i % 2 === 0 ? "var(--bg-surface)" : "transparent")
+                    (e.currentTarget.style.background = i % 2 === 0 ? "#FDFAF7" : "#FFFFFF")
                   }
                 >
                   <td
-                    className="font-display text-[15px]"
-                    style={{ color: "var(--text-primary)", padding: "14px 16px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                    className="font-display font-semibold text-[14px]"
+                    style={{ color: "#2C1F17", padding: "16px 20px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                   >
                     {row.university_name ? row.university_name : <NotFound />}
                   </td>
                   <td
-                    className="font-ui text-[12px]"
-                    style={{ color: "var(--text-secondary)", padding: "14px 16px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                    className="font-ui text-[12px] font-medium"
+                    style={{ color: "#78716C", padding: "16px 20px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                   >
                     {row.program_name ? row.program_name : <NotFound />}
                   </td>
-                  <td style={{ padding: "14px 16px" }}>
+                  <td style={{ padding: "16px 20px" }}>
                     {row.degree_level ? <Badge>{row.degree_level}</Badge> : <NotFound />}
                   </td>
-                  <td style={{ padding: "14px 16px" }}>
+                  <td style={{ padding: "16px 20px" }}>
                     <div className="flex items-center gap-2">
                       <StatusBadge status={row.status} />
                       {row.error && (
@@ -267,26 +304,26 @@ function HistoryPage() {
                           style={{ display: "inline-flex", alignItems: "center" }}
                         >
                           <AlertCircle
-                            size={14}
+                            size={13}
                             style={{ color: "var(--error)", cursor: "help" }}
                           />
                           <div
                             className="absolute left-0 top-full mt-2 hidden group-hover:block z-10 w-64 p-3 rounded-lg"
                             style={{
-                              background: "var(--bg-raised)",
-                              border: "1px solid var(--border)",
-                              boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                              background: "#FFFFFF",
+                              border: "1px solid #E8DDD4",
+                              boxShadow: "0 8px 24px rgba(44, 31, 23, 0.12)",
                             }}
                           >
                             <div
-                              className="font-ui uppercase text-[9px] tracking-widest-2 mb-1"
+                              className="font-ui uppercase text-[8.5px] font-bold tracking-widest-2 mb-1"
                               style={{ color: "var(--error)" }}
                             >
-                              ERROR
+                              ERROR DETAILS
                             </div>
                             <div
                               className="font-mono text-[11px]"
-                              style={{ color: "var(--text-primary)", lineHeight: "1.5" }}
+                              style={{ color: "#2C1F17", lineHeight: "1.5" }}
                             >
                               {row.error}
                             </div>
@@ -296,27 +333,29 @@ function HistoryPage() {
                     </div>
                   </td>
                   <td
-                    className="font-mono text-[12px]"
-                    style={{ color: "var(--text-muted)", padding: "14px 16px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                    className="font-mono text-[11.5px]"
+                    style={{ color: "#C4B5AA", padding: "16px 20px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                   >
                     {row.created_at ? formatToIST(row.created_at) : <NotFound />}
                   </td>
-                  <td style={{ padding: "14px 16px" }}>
-                    <div className="flex items-center gap-3 justify-end">
+                  <td style={{ padding: "16px 20px" }}>
+                    <div className="flex items-center gap-3.5 justify-end">
                       <button
                         onClick={() => setDrawerId(row.scrape_id)}
-                        className="font-ui uppercase text-[10px] tracking-widest-2 hover:underline"
-                        style={{ color: "var(--accent)" }}
+                        className="font-ui uppercase text-[10px] font-bold tracking-widest-2 transition-colors duration-200"
+                        style={{ color: "#C25520" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "#A0440F")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "#C25520")}
                       >
-                        View →
+                        View
                       </button>
                       <button
                         onClick={() => del.mutate(row.scrape_id)}
-                        className="transition-colors"
-                        style={{ color: "var(--text-muted)" }}
+                        className="transition-colors duration-200"
+                        style={{ color: "#C4B5AA", cursor: "pointer" }}
                         onMouseEnter={(e) => (e.currentTarget.style.color = "var(--error)")}
-                        onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
-                        aria-label="Delete"
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "#C4B5AA")}
+                        aria-label="Delete record"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -329,23 +368,23 @@ function HistoryPage() {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-center gap-6 mt-8">
+        <div className="flex items-center justify-center gap-6 mt-4">
           <button
             disabled={page === 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="font-ui uppercase text-[10px] tracking-widest-2 disabled:opacity-30"
-            style={{ color: "var(--text-secondary)" }}
+            className="font-ui uppercase text-[9.5px] font-bold tracking-widest-2 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed"
+            style={{ color: "#78716C" }}
           >
             ← Prev
           </button>
-          <div className="font-ui uppercase text-[10px] tracking-widest-2" style={{ color: "var(--text-muted)" }}>
-            Page <span style={{ color: "var(--accent)" }}>{page}</span> of {totalPages}
+          <div className="font-ui uppercase text-[9.5px] font-bold tracking-widest-2" style={{ color: "#C4B5AA" }}>
+            Page <span style={{ color: "#C25520" }}>{page}</span> of {totalPages}
           </div>
           <button
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className="font-ui uppercase text-[10px] tracking-widest-2 disabled:opacity-30"
-            style={{ color: "var(--text-secondary)" }}
+            className="font-ui uppercase text-[9.5px] font-bold tracking-widest-2 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed"
+            style={{ color: "#78716C" }}
           >
             Next →
           </button>
@@ -355,39 +394,55 @@ function HistoryPage() {
       {/* Drawer */}
       {drawerId && (
         <>
+          {/* Blur overlay */}
           <div
-            className="fixed inset-0 z-40"
-            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+            className="fixed inset-0 z-40 transition-opacity duration-300"
+            style={{
+              background: "rgba(44, 31, 23, 0.35)",
+              backdropFilter: "blur(6px)",
+            }}
             onClick={() => setDrawerId(null)}
           />
           <div
-            className="fixed top-0 right-0 h-screen w-full max-w-[600px] z-50 overflow-y-auto slide-up"
-            style={{ background: "var(--bg-base)", borderLeft: "1px solid var(--border)" }}
+            className="fixed top-0 right-0 h-screen w-full max-w-[620px] z-50 overflow-y-auto slide-up"
+            style={{
+              background: "#FFFCF9",
+              borderLeft: "1px solid #EDE5DC",
+              boxShadow: "-10px 0 40px rgba(44, 31, 23, 0.1)",
+            }}
           >
             <div
-              className="sticky top-0 z-10 px-6 py-4 flex items-center justify-between"
+              className="sticky top-0 z-10 px-8 py-5 flex items-center justify-between"
               style={{
-                background: "var(--bg-base)",
-                borderBottom: "1px solid var(--border)",
+                background: "#FFFCF9",
+                borderBottom: "1px solid #EDE5DC",
               }}
             >
               <div
-                className="font-ui uppercase text-[10px] tracking-widest-2"
-                style={{ color: "var(--text-muted)" }}
+                className="font-ui uppercase text-[10px] font-bold tracking-widest-2"
+                style={{ color: "#C4B5AA" }}
               >
-                Scrape Detail
+                Compilation Sheet
               </div>
               <button
                 onClick={() => setDrawerId(null)}
-                className="p-1.5 rounded-md transition-colors"
-                style={{ color: "var(--text-secondary)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
+                className="p1.5 rounded-lg transition-colors border border-transparent"
+                style={{ color: "#9E9189", background: "#F5F0EA" }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#C25520";
+                  e.currentTarget.style.borderColor = "#F5C9A8";
+                  e.currentTarget.style.background = "#FEF3EC";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "#9E9189";
+                  e.currentTarget.style.borderColor = "transparent";
+                  e.currentTarget.style.background = "#F5F0EA";
+                }}
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-8">
               {detail.isLoading && <div className="h-96 rounded shimmer" />}
               {detail.data && <ResultsCard data={detail.data} />}
             </div>

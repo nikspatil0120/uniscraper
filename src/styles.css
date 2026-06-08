@@ -1,5 +1,5 @@
 /* Google Fonts — must be first @import before any other CSS */
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&display=swap");
 
 @import "tailwindcss" source(none);
 @source "../src";
@@ -44,32 +44,32 @@
 
   --font-display: "Playfair Display", serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --font-ui: "Syne", ui-sans-serif, system-ui, sans-serif;
+  --font-ui: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
 }
 
 :root {
-  --bg-base: #0A0A0F;
-  --bg-surface: #111118;
-  --bg-raised: #1A1A24;
-  --bg-hover: #22222E;
-  --accent: #4FFFB0;
-  --accent-dim: rgba(79, 255, 176, 0.12);
-  --accent-glow: rgba(79, 255, 176, 0.25);
-  --text-primary: #F2EFE9;
-  --text-secondary: #8B8A97;
-  --text-muted: #4A4958;
-  --border: rgba(255, 255, 255, 0.06);
-  --border-accent: rgba(79, 255, 176, 0.3);
-  --success: #4FFFB0;
-  --warning: #FFB84F;
-  --warning-dim: rgba(255, 184, 79, 0.12);
-  --error: #FF5C5C;
-  --error-dim: rgba(255, 92, 92, 0.12);
+  --bg-base: #141211;
+  --bg-surface: #1C1917;
+  --bg-raised: #262220;
+  --bg-hover: #332D2A;
+  --accent: #E58F65;
+  --accent-dim: rgba(229, 143, 101, 0.08);
+  --accent-glow: rgba(229, 143, 101, 0.2);
+  --text-primary: #EAE5DC;
+  --text-secondary: #9D958A;
+  --text-muted: #635C53;
+  --border: rgba(255, 255, 255, 0.04);
+  --border-accent: rgba(229, 143, 101, 0.25);
+  --success: #95B8A2;
+  --warning: #E2AF70;
+  --warning-dim: rgba(226, 175, 112, 0.12);
+  --error: #D07070;
+  --error-dim: rgba(208, 112, 112, 0.12);
 }
 
 @layer base {
@@ -89,26 +89,77 @@
   body > div {
     height: 100%;
   }
+
+  /* Custom scrollbar to look sleek in dark mode */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(229, 143, 101, 0.3);
+  }
 }
 
 @layer utilities {
   .font-display { font-family: var(--font-display); }
   .font-mono { font-family: var(--font-mono); }
   .font-ui { font-family: var(--font-ui); }
-  .tracking-widest-2 { letter-spacing: 0.15em; }
+  .tracking-widest-2 { letter-spacing: 0.18em; }
+
+  .glass-panel {
+    background: rgba(28, 25, 23, 0.75);
+    backdrop-filter: blur(16px) saturate(120%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-panel-raised {
+    background: rgba(38, 34, 32, 0.8);
+    backdrop-filter: blur(20px) saturate(130%);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #E58F65 0%, #D4B895 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .gradient-text-purple {
+    background: linear-gradient(135deg, #EAE5DC 0%, #9D958A 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .glowing-border {
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .glowing-border:focus-within {
+    border-color: #E58F65;
+    box-shadow: 0 0 20px rgba(229, 143, 101, 0.12), inset 0 0 10px rgba(229, 143, 101, 0.04);
+  }
 
   .grid-pattern {
-    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
     background-size: 24px 24px;
   }
 
   .focus-glow:focus {
     outline: none;
+    border-color: var(--accent);
     box-shadow: 0 0 0 1px var(--accent), 0 0 20px var(--accent-glow);
   }
 
   .shimmer {
-    background: linear-gradient(90deg, #1A1A24 25%, #22222E 50%, #1A1A24 75%);
+    background: linear-gradient(90deg, #262220 25%, #332D2A 50%, #262220 75%);
     background-size: 800px 100%;
     animation: shimmer 1.8s infinite;
   }
@@ -120,36 +171,36 @@
 }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.95); }
 }
-.pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+.pulse-dot { animation: pulse-dot 2.5s ease-in-out infinite; }
 
 @keyframes scan-line {
   0% { transform: translateY(-100%); opacity: 0; }
-  50% { opacity: 1; }
+  50% { opacity: 0.6; }
   100% { transform: translateY(100%); opacity: 0; }
 }
-.scan-line { animation: scan-line 1.8s linear infinite; }
+.scan-line { animation: scan-line 2.5s linear infinite; }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(24px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.slide-up { animation: slide-up 0.4s ease-out; }
+.slide-up { animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
 
 @keyframes page-in {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.page-in { animation: page-in 0.3s ease-out; }
+.page-in { animation: page-in 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
 
 @keyframes batch-stripe {
   0% { background-position: 0 0; }
   100% { background-position: 40px 0; }
 }
 .batch-progress-fill {
-  background-image: linear-gradient(90deg, var(--accent), #b0ffd9, var(--accent));
+  background-image: linear-gradient(90deg, var(--accent), #f3c2ab, var(--accent));
   background-size: 200% 100%;
-  animation: batch-stripe 1.4s linear infinite;
+  animation: batch-stripe 1.6s linear infinite;
 }

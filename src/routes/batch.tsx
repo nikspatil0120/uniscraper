@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { X, FileSpreadsheet, ListPlus, PlayCircle, BarChart3 } from "lucide-react";
 
 import { TopBar } from "@/components/TopBar";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -12,22 +12,14 @@ import { StatusBadge, ResultsCard } from "@/components/ResultsCard";
 export const Route = createFileRoute("/batch")({
   head: () => ({
     meta: [
-      { title: "Batch Scrape — UniScraper" },
-      { name: "description", content: "Run dozens of university scrapes in parallel." },
+      { title: "Batch Compiler — UniScraper" },
+      { name: "description", content: "Run multiple university program compilations in parallel." },
     ],
   }),
   component: BatchPage,
 });
 
-// ── Detail drawer ─────────────────────────────────────────────────────────────
-
-function DetailDrawer({
-  scrapeId,
-  onClose,
-}: {
-  scrapeId: string;
-  onClose: () => void;
-}) {
+function DetailDrawer({ scrapeId, onClose }: { scrapeId: string; onClose: () => void }) {
   const detail = useQuery({
     queryKey: ["scrape", scrapeId],
     queryFn: () => api.getScrape(scrapeId),
@@ -35,42 +27,48 @@ function DetailDrawer({
 
   return (
     <>
-      {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40"
-        style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+        className="fixed inset-0 z-40 transition-opacity duration-300"
+        style={{ background: "rgba(44, 31, 23, 0.35)", backdropFilter: "blur(6px)" }}
         onClick={onClose}
       />
-
-      {/* Panel */}
       <div
         className="fixed top-0 right-0 h-screen w-full max-w-[620px] z-50 overflow-y-auto slide-up"
-        style={{ background: "var(--bg-base)", borderLeft: "1px solid var(--border)" }}
+        style={{
+          background: "#FFFCF9",
+          borderLeft: "1px solid #EDE5DC",
+          boxShadow: "-10px 0 40px rgba(44, 31, 23, 0.1)",
+        }}
       >
-        {/* Header */}
         <div
-          className="sticky top-0 z-10 px-6 py-4 flex items-center justify-between"
-          style={{ background: "var(--bg-base)", borderBottom: "1px solid var(--border)" }}
+          className="sticky top-0 z-10 px-8 py-5 flex items-center justify-between"
+          style={{ background: "#FFFCF9", borderBottom: "1px solid #EDE5DC" }}
         >
           <div
-            className="font-ui uppercase text-[10px] tracking-widest-2"
-            style={{ color: "var(--text-muted)" }}
+            className="font-ui uppercase text-[10px] font-bold tracking-widest-2"
+            style={{ color: "#C4B5AA" }}
           >
-            Scrape Detail
+            Compilation Sheet
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-md transition-colors"
-            style={{ color: "var(--text-secondary)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
+            className="p-1.5 rounded-lg transition-colors border border-transparent"
+            style={{ color: "#9E9189", background: "#F5F0EA" }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "#C25520";
+              e.currentTarget.style.borderColor = "#F5C9A8";
+              e.currentTarget.style.background = "#FEF3EC";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "#9E9189";
+              e.currentTarget.style.borderColor = "transparent";
+              e.currentTarget.style.background = "#F5F0EA";
+            }}
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
-
-        {/* Content */}
-        <div className="p-6">
+        <div className="p-8">
           {detail.isLoading && <div className="h-96 rounded shimmer" />}
           {detail.data && <ResultsCard data={detail.data} />}
         </div>
@@ -78,8 +76,6 @@ function DetailDrawer({
     </>
   );
 }
-
-// ── Main page ─────────────────────────────────────────────────────────────────
 
 function BatchPage() {
   const [urlText, setUrlText] = useState("");
@@ -128,14 +124,8 @@ function BatchPage() {
   }, [queries]);
 
   const handleRun = () => {
-    const list = urlText
-      .split("\n")
-      .map((u) => u.trim())
-      .filter(Boolean);
-    if (list.length === 0) {
-      toast.error("Add at least one URL");
-      return;
-    }
+    const list = urlText.split("\n").map((u) => u.trim()).filter(Boolean);
+    if (list.length === 0) { toast.error("Add at least one URL"); return; }
     start.mutate(list);
   };
 
@@ -150,60 +140,77 @@ function BatchPage() {
         d?.status ?? "pending",
         d?.tuition_fees?.international ?? "",
         d?.english_requirements?.ielts ?? "",
-      ]
-        .map((c) => `"${String(c).replace(/"/g, '""')}"`)
-        .join(",");
+      ].map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",");
     });
     const blob = new Blob([[headers.join(","), ...rows].join("\n")], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `batch-${Date.now()}.csv`;
+    a.download = `batch-archive-${Date.now()}.csv`;
     a.click();
+    toast.success("CSV Export downloaded");
   };
 
   return (
-    <div className="page-in">
-      <TopBar title="Batch Scrape" />
+    <div className="page-in min-h-screen flex flex-col" style={{ background: "#FFFCF9" }}>
+      <TopBar title="Batch Compiler" />
 
-      <div className="px-10 py-8 max-w-[1100px]">
-        {/* URL input */}
-        <div className="mb-3">
+      <div className="px-10 py-8 flex-1 flex flex-col gap-6 max-w-[1100px] w-full mx-auto">
+
+        {/* Intro */}
+        <div className="flex flex-col gap-1.5 mb-2">
+          <h2 className="font-display italic text-[22px] font-bold" style={{ color: "#2C1F17" }}>
+            Run Batch Compilation
+          </h2>
+          <p className="font-ui text-[12px] leading-relaxed" style={{ color: "#9E9189" }}>
+            Queue multiple university course URLs. The system will stagger compiling page contents in parallel to construct structured Admission criteria sheets.
+          </p>
+        </div>
+
+        {/* URL inputs */}
+        <div className="flex flex-col gap-2">
           <label
-            className="font-ui uppercase text-[10px] tracking-widest-2 block mb-2"
-            style={{ color: "var(--text-secondary)" }}
+            className="font-ui uppercase text-[9px] font-bold tracking-widest-2 flex items-center gap-1.5"
+            style={{ color: "#9E9189" }}
           >
-            Enter URLs — One Per Line
+            <ListPlus size={12} style={{ color: "#C25520" }} /> Target URLs — One per line
           </label>
           <textarea
             value={urlText}
             onChange={(e) => setUrlText(e.target.value)}
-            placeholder={
-              "https://university-a.edu/programs/cs-msc\nhttps://university-b.edu/programs/data-science"
-            }
-            className="w-full font-mono text-[13px] rounded-lg px-5 py-4 focus-glow resize-y"
+            placeholder={"https://university-a.edu/programs/cs-msc\nhttps://university-b.edu/programs/data-science"}
+            className="w-full font-mono text-[12.5px] rounded-lg px-4 py-3.5 transition-all duration-300 focus:outline-none resize-y"
             style={{
-              minHeight: 200,
-              background: "var(--bg-raised)",
-              color: "var(--text-primary)",
-              border: "1px solid transparent",
+              minHeight: 180,
+              background: "#FFFFFF",
+              color: "#2C1F17",
+              border: "1px solid #E8DDD4",
+              boxShadow: "inset 0 1px 3px rgba(0,0,0,0.04)",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#C25520";
+              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(194, 85, 32, 0.08), inset 0 1px 3px rgba(0,0,0,0.04)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#E8DDD4";
+              e.currentTarget.style.boxShadow = "inset 0 1px 3px rgba(0,0,0,0.04)";
             }}
           />
         </div>
 
-        <div className="max-w-[300px]">
-          <PrimaryButton
-            type="button"
-            onClick={handleRun}
-            loading={queuing}
-            loadingText="QUEUING..."
-          >
-            Run Batch
+        {/* Trigger Button */}
+        <div className="flex items-center gap-4 max-w-[280px]">
+          <PrimaryButton type="button" onClick={handleRun} loading={queuing} loadingText="QUEUING COMPILATION...">
+            <div className="flex items-center gap-2">
+              <PlayCircle size={15} /> Run Batch Compiler
+            </div>
           </PrimaryButton>
           {queuing && (
             <button
               onClick={() => setQueuing(false)}
-              className="font-ui uppercase text-[10px] tracking-widest-2 mt-2 block"
-              style={{ color: "var(--text-muted)" }}
+              className="font-ui uppercase text-[9.5px] font-bold tracking-widest-2 cursor-pointer transition-colors"
+              style={{ color: "#C4B5AA" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#2C1F17")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#C4B5AA")}
             >
               Cancel
             </button>
@@ -212,44 +219,46 @@ function BatchPage() {
 
         {/* Progress bar */}
         {total > 0 && !allDone && (
-          <div className="mt-10">
-            <div
-              className="overflow-hidden"
-              style={{ width: "100%", height: 4, background: "#1A1A24", borderRadius: 2 }}
-            >
+          <div
+            className="mt-6 rounded-lg p-5"
+            style={{ border: "1px solid #EDE5DC", background: "#FBF7F3" }}
+          >
+            <div style={{ width: "100%", height: 6, borderRadius: 999, background: "#EDE5DC", overflow: "hidden" }}>
               <div
-                className="transition-all duration-500"
-                style={{
-                  height: 4,
-                  borderRadius: 2,
-                  background: "linear-gradient(90deg, #4FFFB0, #7AFFCC)",
-                  width: `${(completed / total) * 100}%`,
-                }}
+                className="batch-progress-fill transition-all duration-500"
+                style={{ height: 6, borderRadius: 999, width: `${(completed / total) * 100}%`, background: "#C25520" }}
               />
             </div>
-            <div
-              className="font-mono"
-              style={{ marginTop: 10, fontSize: 13, color: "#4FFFB0" }}
-            >
-              {completed} / {total} COMPLETE
+            <div className="flex justify-between items-center mt-3">
+              <div className="font-ui uppercase text-[9.5px] font-bold tracking-widest-2" style={{ color: "#9E9189" }}>
+                Compiling Batch
+              </div>
+              <div className="font-mono text-[12px] font-bold" style={{ color: "#C25520" }}>
+                {completed} / {total} COMPLETE ({((completed / total) * 100).toFixed(0)}%)
+              </div>
             </div>
           </div>
         )}
 
         {/* Summary stats */}
         {allDone && (
-          <div className="mt-10">
-            <div
-              className="flex flex-col sm:flex-row slide-up"
-              style={{ gap: 16, marginBottom: 32 }}
-            >
-              <StatCard label="Successful" value={stats.success} tone="#4FFFB0" />
-              <StatCard label="Partial" value={stats.partial} tone="#FFB84F" />
-              <StatCard label="Failed" value={stats.failed} tone="#FF5C5C" />
+          <div className="mt-4 flex flex-col gap-6 slide-up">
+            <div className="flex items-center gap-2 pb-2 border-b" style={{ borderColor: "#EDE5DC" }}>
+              <BarChart3 size={14} style={{ color: "#C25520" }} />
+              <span className="font-ui uppercase text-[9.5px] font-bold tracking-widest-2" style={{ color: "#9E9189" }}>
+                Batch Summary Metrics
+              </span>
             </div>
-            <div className="max-w-[320px]">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <StatCard label="Compiled" value={stats.success} tone="#C25520" borderCol="#F5C9A8" bg="#FEF3EC" />
+              <StatCard label="Partial" value={stats.partial} tone="#B07D2E" borderCol="#F0D4A0" bg="#FDF6E8" />
+              <StatCard label="Failed" value={stats.failed} tone="var(--error)" borderCol="#F5C0C0" bg="#FEF0F0" />
+            </div>
+            <div className="max-w-[280px]">
               <PrimaryButton type="button" onClick={downloadAllCsv}>
-                Download All as CSV
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet size={15} /> Download All CSV
+                </div>
               </PrimaryButton>
             </div>
           </div>
@@ -258,28 +267,27 @@ function BatchPage() {
         {/* Live results table */}
         {total > 0 && (
           <div
-            className="mt-10 rounded-xl overflow-hidden"
-            style={{ border: "1px solid var(--border)" }}
+            className="mt-6 rounded-xl overflow-hidden"
+            style={{
+              border: "1px solid #E8DDD4",
+              background: "#FFFFFF",
+              boxShadow: "0 4px 16px rgba(44, 31, 23, 0.06)",
+            }}
           >
             <table style={{ width: "100%", tableLayout: "fixed", borderCollapse: "collapse" }}>
               <colgroup>
-                <col style={{ width: "38%" }} />
+                <col style={{ width: "40%" }} />
                 <col style={{ width: "14%" }} />
-                <col style={{ width: "36%" }} />
+                <col style={{ width: "34%" }} />
                 <col style={{ width: "12%" }} />
               </colgroup>
               <thead>
-                <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                  {["URL", "Status", "Result Preview", ""].map((h) => (
+                <tr style={{ borderBottom: "1px solid #EDE5DC", background: "#FBF7F3" }}>
+                  {["Target URL", "Status", "University / Program", ""].map((h) => (
                     <th
                       key={h}
-                      className="font-ui uppercase text-[10px] tracking-widest-2"
-                      style={{
-                        color: "var(--text-muted)",
-                        padding: "12px 16px",
-                        textAlign: "left",
-                        fontWeight: 400,
-                      }}
+                      className="font-ui uppercase text-[9px] font-bold tracking-widest-2"
+                      style={{ color: "#C4B5AA", padding: "14px 18px", textAlign: "left", fontWeight: 700 }}
                     >
                       {h}
                     </th>
@@ -297,65 +305,49 @@ function BatchPage() {
                   return (
                     <tr
                       key={id}
-                      style={{ background: i % 2 === 0 ? "var(--bg-surface)" : "transparent" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                      className="transition-colors duration-200"
+                      style={{
+                        background: i % 2 === 0 ? "#FDFAF7" : "#FFFFFF",
+                        borderBottom: "1px solid #EDE5DC",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#FEF3EC")}
                       onMouseLeave={(e) =>
-                        (e.currentTarget.style.background =
-                          i % 2 === 0 ? "var(--bg-surface)" : "transparent")
+                        (e.currentTarget.style.background = i % 2 === 0 ? "#FDFAF7" : "#FFFFFF")
                       }
                     >
-                      {/* URL */}
                       <td
-                        className="font-mono text-[12px]"
-                        style={{
-                          color: "var(--text-secondary)",
-                          padding: "14px 16px",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
+                        className="font-mono text-[11.5px]"
+                        style={{ color: "#78716C", padding: "14px 18px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                       >
                         {urls[i]}
                       </td>
-
-                      {/* Status */}
-                      <td style={{ padding: "14px 16px" }}>
+                      <td style={{ padding: "14px 18px" }}>
                         <div className="flex items-center gap-2">
                           {inProgress && (
                             <span
                               className="pulse-dot inline-block w-1.5 h-1.5 rounded-full"
-                              style={{ background: "var(--warning)" }}
+                              style={{ background: "#B07D2E" }}
                             />
                           )}
                           <StatusBadge status={status} />
                         </div>
                       </td>
-
-                      {/* Preview */}
                       <td
-                        className="font-mono text-[12px]"
-                        style={{
-                          color: "var(--text-primary)",
-                          padding: "14px 16px",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
+                        className="font-ui text-[12px] font-medium"
+                        style={{ color: "#2C1F17", padding: "14px 18px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                       >
                         {d?.university_name
                           ? `${d.university_name} — ${d.program_name ?? "—"}`
-                          : inProgress
-                            ? "Working..."
-                            : "—"}
+                          : inProgress ? "Compiling..." : "—"}
                       </td>
-
-                      {/* View button */}
-                      <td style={{ padding: "14px 16px", textAlign: "right" }}>
+                      <td style={{ padding: "14px 18px", textAlign: "right" }}>
                         {isDone && (
                           <button
                             onClick={() => setDrawerId(id)}
-                            className="font-ui uppercase text-[10px] tracking-widest-2 hover:underline"
-                            style={{ color: "var(--accent)" }}
+                            className="font-ui uppercase text-[9.5px] font-bold tracking-widest-2 transition-colors cursor-pointer"
+                            style={{ color: "#C25520" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = "#A0440F")}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = "#C25520")}
                           >
                             View →
                           </button>
@@ -370,31 +362,34 @@ function BatchPage() {
         )}
       </div>
 
-      {/* Detail drawer */}
-      {drawerId && (
-        <DetailDrawer scrapeId={drawerId} onClose={() => setDrawerId(null)} />
-      )}
+      {drawerId && <DetailDrawer scrapeId={drawerId} onClose={() => setDrawerId(null)} />}
     </div>
   );
 }
 
-function StatCard({ label, value, tone }: { label: string; value: number; tone: string }) {
+function StatCard({
+  label, value, tone, borderCol, bg,
+}: {
+  label: string; value: number; tone: string; borderCol: string; bg: string;
+}) {
   return (
     <div
       style={{
         flex: 1,
-        padding: "28px 24px",
-        background: "#111118",
-        border: "1px solid rgba(255,255,255,0.06)",
-        borderRadius: 12,
+        padding: "24px 20px",
+        borderRadius: 10,
+        borderLeft: `3px solid ${tone}`,
+        border: `1px solid ${borderCol}`,
+        background: bg,
+        boxShadow: "0 2px 8px rgba(44, 31, 23, 0.06)",
       }}
     >
-      <div className="font-display italic leading-none" style={{ fontSize: 56, color: tone }}>
+      <div className="font-display leading-none font-bold" style={{ fontSize: 48, color: tone }}>
         {value}
       </div>
       <div
-        className="font-ui uppercase"
-        style={{ marginTop: 12, fontSize: 10, letterSpacing: "0.15em", color: "#4A4958" }}
+        className="font-ui uppercase font-bold text-[9px] tracking-widest-2"
+        style={{ marginTop: 10, color: "#C4B5AA" }}
       >
         {label}
       </div>

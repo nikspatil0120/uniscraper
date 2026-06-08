@@ -6,6 +6,10 @@
     "module": "ESNext",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
 
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["vite/client"],
+
     /* Bundler mode — matches how Vite processes src files */
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
