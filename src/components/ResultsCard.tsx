@@ -34,7 +34,7 @@ function FieldBlock({ field }: { field: Field }) {
     >
       <div
         className="font-ui uppercase text-[8.5px] font-bold tracking-widest-2 mb-1.5"
-        style={{ color: "var(--text-muted)", opacity: 0.8 }}
+        style={{ color: "var(--text-muted)" }}
       >
         {field.label}
       </div>
