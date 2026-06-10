@@ -2,16 +2,16 @@ import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 
 const STEPS = [
-  "Fetching page",
-  "Detecting content type",
-  "Following sub-pages",
+  "Tier 1: Crawl4AI stealth fetch",
+  "Tier 2/3: Firecrawl or httpx fallback",
+  "Classifying page types",
   "Extracting PDFs",
-  "Running AI extraction",
+  "Running AI extraction (Gemini)",
   "Saving results",
 ];
 
-// Approximate progression: ~15s total scrape
-const STEP_TIMINGS = [1.5, 3.5, 6, 8.5, 12.5, 15];
+// Approximate progression: ~40-50s with three-tier pipeline
+const STEP_TIMINGS = [5, 15, 25, 30, 40, 45];
 
 export function ScrapeTimeline({ startedAt }: { startedAt: number }) {
   const [elapsed, setElapsed] = useState(0);

@@ -63,6 +63,9 @@ export interface ScrapeRecord {
   field_sources?: Record<string, string> | null;
   elapsed_seconds?: number | null;
   method_used?: string | null;
+  tier_used?: number | null;          // 1 (Crawl4AI), 2 (Firecrawl), or 3 (httpx)
+  pages_fetched?: number | null;      // Number of pages scraped
+  llm_model?: string | null;          // LLM model used for extraction
   error?: string | null;
 }
 

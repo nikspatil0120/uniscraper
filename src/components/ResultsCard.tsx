@@ -232,6 +232,18 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
           <div className="flex flex-wrap gap-2 mt-4">
             {!fmt(data.degree_level).missing && <Badge>{data.degree_level}</Badge>}
             {!fmt(data.program_duration).missing && <Badge>{data.program_duration}</Badge>}
+            {data.tier_used && (
+              <Badge tone="accent">
+                Tier {data.tier_used} — {
+                  data.tier_used === 1 ? "Crawl4AI" : 
+                  data.tier_used === 2 ? "Firecrawl" : 
+                  "httpx"
+                }
+              </Badge>
+            )}
+            {data.pages_fetched && data.pages_fetched > 1 && (
+              <Badge tone="accent">{data.pages_fetched} pages</Badge>
+            )}
           </div>
         </div>
         
