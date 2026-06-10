@@ -1,13 +1,13 @@
 # pipeline/orchestrator.py
 # run_scrape(scrape_id, url, context_hint) — main pipeline coordinator.
 #
-# ARCHITECTURE: ONE Gemini call per university.
-#   1. Fetch main page
-#   2. Extract sub-page links + fetch sub-pages concurrently
-#   3. Extract PDFs from main page
-#   4. Clean + combine ALL text into one string
-#   5. Single Gemini extraction call
-#   6. Save to MongoDB
+# FETCH STRATEGY — three-tier waterfall via intelligent_fetcher:
+#   Tier 1: Crawl4AI  (stealth Playwright + fit_markdown)
+#   Tier 2: Firecrawl (hosted API — handles Cloudflare)
+#   Tier 3: Custom    (httpx → Playwright, guaranteed fallback)
+#
+# After fetching, the pipeline is unchanged:
+#   → PDF extraction → single Gemini call → MongoDB save
 
 import asyncio
 import logging
@@ -16,11 +16,10 @@ from datetime import datetime, timezone
 
 from config import settings
 import database
-from pipeline.fetcher import fetch_page
-from pipeline.link_extractor import extract_relevant_links
+from pipeline.intelligent_fetcher import fetch_subpages_intelligent
 from pipeline.pdf_extractor import extract_pdfs_from_page
 from pipeline.ai_extractor import extract_fields
-from utils.text_cleaner import clean_html, clean_text_content, combine_texts, truncate_text
+from utils.text_cleaner import clean_text_content, combine_texts
 from utils.page_classifier import classify_page
 
 logger = logging.getLogger(__name__)
@@ -31,33 +30,21 @@ def _utcnow() -> datetime:
 
 
 def _determine_status(result: dict) -> str:
-    """
-    success:  university_name present AND ≥8 other non-null fields
-    partial:  university_name OR program_name present, but <8 other fields
-    failed:   neither university_name nor program_name found
-    """
     has_uni = result.get("university_name") is not None
     has_prog = result.get("program_name") is not None
-
     if not has_uni and not has_prog:
         return "failed"
-
     meta_keys = {"scrape_id", "status", "created_at", "source_urls",
                  "field_sources", "confidence_notes"}
-    other_non_null = sum(
-        1 for k, v in result.items()
-        if k not in meta_keys and v is not None
-    )
-
+    other_non_null = sum(1 for k, v in result.items() if k not in meta_keys and v is not None)
     if has_uni and other_non_null >= 8:
         return "success"
     return "partial"
 
 
 async def run_scrape_delayed(scrape_id: str, url: str, context_hint: str, delay_seconds: float) -> None:
-    """Wrapper that sleeps before running — used by batch to stagger requests."""
     if delay_seconds > 0:
-        logger.info(f"[orchestrator] {scrape_id} — waiting {delay_seconds:.0f}s before start (batch stagger)")
+        logger.info(f"[orchestrator] {scrape_id} — waiting {delay_seconds:.0f}s (batch stagger)")
         await asyncio.sleep(delay_seconds)
     await run_scrape(scrape_id, url, context_hint)
 
@@ -65,7 +52,6 @@ async def run_scrape_delayed(scrape_id: str, url: str, context_hint: str, delay_
 async def run_scrape(scrape_id: str, url: str, context_hint: str = "") -> None:
     """
     Full scraping pipeline. Runs as a FastAPI BackgroundTask.
-    Makes exactly ONE Gemini API call per scrape.
     Never raises — all exceptions are caught and written to MongoDB.
     """
     start_time = time.monotonic()
@@ -78,131 +64,139 @@ async def run_scrape(scrape_id: str, url: str, context_hint: str = "") -> None:
             {"$set": {"status": "running", "started_at": _utcnow()}},
         )
 
-        # ── STEP 2: Fetch main page ───────────────────────────────────────────
+        # ── STEP 2: Fetch all pages via intelligent three-tier waterfall ──────
         logger.info(f"[orchestrator] {scrape_id} — fetching {url}")
-        fetch_result = await fetch_page(url)
 
-        if fetch_result["html"] is None:
+        all_pages = await fetch_subpages_intelligent(
+            url, max_pages=settings.max_subpages
+        )
+
+        if not all_pages:
             await col.update_one(
                 {"scrape_id": scrape_id},
                 {"$set": {
                     "status": "failed",
-                    "error": fetch_result.get("error", "Failed to fetch page"),
+                    "error": "All fetch tiers failed — no content retrieved",
                     "completed_at": _utcnow(),
                 }},
             )
-            logger.error(f"[orchestrator] {scrape_id} — fetch failed: {fetch_result.get('error')}")
+            logger.error(f"[orchestrator] {scrape_id} — all tiers failed for {url}")
             return
 
-        main_html = fetch_result["html"]
-        final_url = fetch_result.get("final_url", url)
-        logger.info(f"[orchestrator] {scrape_id} — main page: "
-                    f"{fetch_result['word_count']} words via {fetch_result['method_used']}")
+        main_page = all_pages[0]
+        tier_used = main_page.get("tier", 3)
+        method_used = main_page.get("method", "unknown")
+        final_url = main_page.get("url", url)
 
-        # ── STEP 3: Extract sub-page links ────────────────────────────────────
-        sub_urls = extract_relevant_links(main_html, final_url)
-        logger.info(f"[orchestrator] {scrape_id} — {len(sub_urls)} sub-pages found")
+        logger.info(
+            f"[orchestrator] {scrape_id} — fetched {len(all_pages)} pages via "
+            f"Tier {tier_used} ({method_used})"
+        )
+        print(f"\n[FETCH] Tier {tier_used} ({method_used}) — "
+              f"{len(all_pages)} pages, main={main_page.get('word_count', 0)} words")
 
-        # ── STEP 4: Extract PDFs ──────────────────────────────────────────────
-        pdf_results = await extract_pdfs_from_page(main_html, final_url)
-        logger.info(f"[orchestrator] {scrape_id} — {len(pdf_results)} PDFs found")
+        # ── STEP 3: Build pages_data and text_parts ───────────────────────────
+        pages_data: list[dict] = []
+        text_parts: list[tuple[str, str]] = []
 
-        # ── STEP 5: Clean main page first ────────────────────────────────────────
-        try:
-            main_clean = clean_html(main_html)
-        except Exception as e:
-            logger.error(f"[orchestrator] {scrape_id} — failed to clean main HTML: {e}")
-            main_clean = main_html  # Fallback to raw HTML if cleaning fails
-        
-        # ── STEP 6: Fetch sub-pages concurrently (OPTIMIZED) ─────────────────────
-        max_concurrent = max(1, min(len(sub_urls), 3))  # At least 1 to avoid range(0,0,0)
-        
-        async def fetch_with_classification(url):
-            result = await fetch_page(url)
-            if result.get("html"):
-                clean_content = clean_html(result["html"])
-                page_type = classify_page(url, clean_content)
-                return url, result["html"], clean_content, page_type
-            return url, None, None, "other"
-        
-        # Process in batches to control concurrency
-        sub_results = []
-        for i in range(0, len(sub_urls), max_concurrent):
-            batch = sub_urls[i:i + max_concurrent]
-            batch_tasks = [fetch_with_classification(url) for url in batch]
-            batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
-            sub_results.extend(batch_results)
-
-        # ── STEP 7: Process results and build text parts ─────────────────────────
-        text_parts: list[tuple[str, str]] = []  # (label, cleaned_text)
-        text_parts.append(("MAIN PAGE", main_clean))
-        
-        sub_pages: list[tuple[str, str]] = []
-        pages_data = [{"url": final_url, "content": main_clean, "page_type": "programme_overview"}]
-        
-        for result in sub_results:
-            if isinstance(result, Exception):
-                logger.warning(f"[orchestrator] {scrape_id} — sub-page error: {result}")
+        for page in all_pages:
+            content = page.get("content") or page.get("markdown") or ""
+            if not content or len(content.split()) < 30:
+                logger.warning(
+                    f"[orchestrator] skipping thin page "
+                    f"{page.get('url', '')[-60:]} ({len(content.split())} words)"
+                )
                 continue
-            
-            sub_url, sub_html, sub_clean, page_type = result
-            if sub_html and sub_clean:
-                sub_pages.append((sub_url, sub_html))
-                pages_data.append({"url": sub_url, "content": sub_clean, "page_type": page_type})
-                label = f"{sub_url.split('/')[-1] or sub_url.split('/')[-2] or sub_url} ({page_type})"
-                text_parts.append((label.upper(), sub_clean))
-        # ── STEP 8: Process PDFs ─────────────────────────────────────────────────
-        pdf_count = 0
-        for pdf_r in pdf_results:
-            if pdf_r.get("text"):
-                pdf_clean = clean_text_content(pdf_r["text"])
-                label = pdf_r["url"].split("/")[-1] or "PDF"
-                text_parts.append((f"PDF: {label}", pdf_clean))
-                pdf_count += 1
 
+            page_url = page.get("url", url)
+            page_type = page.get("page_type") or classify_page(page_url, content)
+
+            pages_data.append({
+                "url":        page_url,
+                "content":    content,
+                "page_type":  page_type,
+                "word_count": len(content.split()),
+                "method":     page.get("method", method_used),
+                "tier":       page.get("tier", tier_used),
+            })
+
+            is_main = (page_url == final_url or page == all_pages[0])
+            label = "MAIN PAGE" if is_main else (
+                f"{page_url.split('/')[-1] or page_url.split('/')[-2] or page_url} ({page_type})"
+            ).upper()
+            text_parts.append((label, content))
+
+        if not pages_data:
+            await col.update_one(
+                {"scrape_id": scrape_id},
+                {"$set": {
+                    "status": "failed",
+                    "error": "All fetched pages were too thin to process",
+                    "completed_at": _utcnow(),
+                }},
+            )
+            return
+
+        # ── STEP 4: Extract PDFs from main page HTML ──────────────────────────
+        pdf_count = 0
+        main_html = main_page.get("html", "")
+        if main_html:
+            try:
+                pdf_results = await database_safe_pdf_extract(main_html, final_url)
+                for pdf_r in pdf_results:
+                    if pdf_r.get("text"):
+                        pdf_clean = clean_text_content(pdf_r["text"])
+                        label = pdf_r["url"].split("/")[-1] or "PDF"
+                        text_parts.append((f"PDF: {label}", pdf_clean))
+                        pdf_count += 1
+            except Exception as pdf_exc:
+                logger.warning(f"[orchestrator] {scrape_id} — PDF extraction failed: {pdf_exc}")
+
+        # ── STEP 5: Combine all text ──────────────────────────────────────────
         combined = combine_texts(text_parts)
 
-        # Debug summary
-        print(f"\n[DEBUG] Scrape {scrape_id[:8]}...")
-        print(f"[DEBUG]   Main page raw:  {len(main_html):,} chars")
-        print(f"[DEBUG]   Sub-pages:      {len(sub_pages)}")
-        print(f"[DEBUG]   PDFs processed: {pdf_count}")
+        print(f"[DEBUG] Scrape {scrape_id[:8]}...")
+        print(f"[DEBUG]   Tier:           {tier_used} ({method_used})")
+        print(f"[DEBUG]   Pages:          {len(pages_data)}")
+        print(f"[DEBUG]   PDFs:           {pdf_count}")
         print(f"[DEBUG]   Combined text:  {len(combined):,} chars")
-        logger.info(f"[orchestrator] {scrape_id} — combined {len(text_parts)} sources, "
-                    f"{len(combined):,} chars total")
+        logger.info(
+            f"[orchestrator] {scrape_id} — combined {len(text_parts)} sources, "
+            f"{len(combined):,} chars, tier={tier_used}"
+        )
 
-        all_source_urls = [final_url] + [u for u, _ in sub_pages] + \
-                          [r["url"] for r in pdf_results if r.get("text")]
+        all_source_urls = [p["url"] for p in pages_data]
 
-        # ── STEP 9: Single LLM extraction call ───────────────────────────────
-        logger.info(f"[orchestrator] {scrape_id} — starting extraction")
-        extracted = await extract_fields(combined, final_url, context_hint, pages_data)
+        # ── STEP 6: LLM extraction ────────────────────────────────────────────
+        # Tiers 1 & 2 return clean markdown — skip clean_html() inside ai_extractor
+        content_format = "markdown" if tier_used in (1, 2) else "html"
 
-        # Pull internal metadata key before saving
-        llm_model_used = extracted.pop("_model_used", fetch_result.get("method_used", "unknown"))
+        logger.info(f"[orchestrator] {scrape_id} — starting extraction (format={content_format})")
+        extracted = await extract_fields(
+            combined, final_url, context_hint, pages_data,
+            content_format=content_format,
+        )
 
-        # ── STEP 9b: Build field_sources attribution ──────────────────────────
-        # For each non-null field, record which page URL it most likely came from
-        # based on the same relevance scoring used during extraction.
+        llm_model_used = extracted.pop("_model_used", method_used)
+
+        # ── STEP 7: Build field_sources attribution ───────────────────────────
         from pipeline.ai_extractor import calculate_page_relevance_score
 
-        field_sources: dict[str, str] = {}
-
         FIELD_TO_GROUP = {
-            "university_name": "program_duration",
-            "program_name": "program_duration",
-            "degree_level": "program_duration",
-            "program_duration": "program_duration",
-            "intake_months": "intake_months",
-            "application_deadlines": "application_deadlines",
+            "university_name":          "program_duration",
+            "program_name":             "program_duration",
+            "degree_level":             "program_duration",
+            "program_duration":         "program_duration",
+            "intake_months":            "intake_months",
+            "application_deadlines":    "application_deadlines",
             "min_academic_requirement": "application_deadlines",
-            "accepted_qualifications": "application_deadlines",
-            "work_experience": "application_deadlines",
-            "other_requirements": "application_deadlines",
-            "english_requirements": "english_requirements",
-            "tuition_fees": "tuition_fees",
-            "other_fees": "tuition_fees",
-            "scholarships": "tuition_fees",
+            "accepted_qualifications":  "application_deadlines",
+            "work_experience":          "application_deadlines",
+            "other_requirements":       "application_deadlines",
+            "english_requirements":     "english_requirements",
+            "tuition_fees":             "tuition_fees",
+            "other_fees":               "tuition_fees",
+            "scholarships":             "tuition_fees",
         }
 
         def _best_source_url(group: str) -> str:
@@ -213,54 +207,53 @@ async def run_scrape(scrape_id: str, url: str, context_hint: str = "") -> None:
                     best_score, best_url = score, page["url"]
             return best_url
 
+        field_sources: dict[str, str] = {}
         for field, group in FIELD_TO_GROUP.items():
             value = extracted.get(field)
             if value is None:
                 continue
             source = _best_source_url(group)
             field_sources[field] = source
-            # Dot-notation for nested sub-fields
             if isinstance(value, dict):
                 for sub_key, sub_val in value.items():
                     if sub_val is not None:
                         field_sources[f"{field}.{sub_key}"] = source
 
         extracted["field_sources"] = field_sources
-        logger.info(f"[orchestrator] {scrape_id} — field_sources: {list(field_sources.keys())}")
 
-        # ── STEP 9: Determine status ──────────────────────────────────────────
+        # ── STEP 8: Save to MongoDB ───────────────────────────────────────────
         status = _determine_status(extracted)
-
-        # ── STEP 9: Save to MongoDB ───────────────────────────────────────────
         elapsed = time.monotonic() - start_time
+
         update_doc = {
             **extracted,
-            "status": status,
-            "source_urls": all_source_urls,
-            "completed_at": _utcnow(),
-            "method_used": fetch_result.get("method_used"),
-            "llm_model": llm_model_used,
+            "status":          status,
+            "source_urls":     all_source_urls,
+            "completed_at":    _utcnow(),
+            "method_used":     method_used,
+            "tier_used":       tier_used,
+            "pages_fetched":   len(pages_data),
+            "llm_model":       llm_model_used,
             "elapsed_seconds": round(elapsed, 2),
         }
-        # Don't store entirely-null nested dicts
         if update_doc.get("english_requirements") is None:
             update_doc.pop("english_requirements", None)
         if update_doc.get("tuition_fees") is None:
             update_doc.pop("tuition_fees", None)
-        # Ensure field_sources is always present (even if empty)
         if "field_sources" not in update_doc or update_doc["field_sources"] is None:
             update_doc["field_sources"] = {}
 
-        await col.update_one(
-            {"scrape_id": scrape_id},
-            {"$set": update_doc},
-        )
+        await col.update_one({"scrape_id": scrape_id}, {"$set": update_doc})
 
-        # ── STEP 10: Log completion ───────────────────────────────────────────
         non_null = sum(1 for v in extracted.values() if v is not None)
-        print(f"[DEBUG]   Status: {status} | Fields: {non_null} | Time: {elapsed:.1f}s\n")
-        logger.info(f"[orchestrator] {scrape_id} — {status}, "
-                    f"{len(all_source_urls)} sources, {elapsed:.1f}s, {non_null} fields")
+        print(
+            f"[DEBUG]   Status: {status} | Fields: {non_null} | "
+            f"Tier: {tier_used} | Time: {elapsed:.1f}s\n"
+        )
+        logger.info(
+            f"[orchestrator] {scrape_id} — {status}, {len(all_source_urls)} sources, "
+            f"tier={tier_used}, {elapsed:.1f}s, {non_null} fields"
+        )
 
     except Exception as exc:
         elapsed = time.monotonic() - start_time
@@ -277,3 +270,13 @@ async def run_scrape(scrape_id: str, url: str, context_hint: str = "") -> None:
             )
         except Exception as db_exc:
             logger.error(f"[orchestrator] {scrape_id} — MongoDB update failed: {db_exc}")
+
+
+async def database_safe_pdf_extract(html: str, url: str) -> list[dict]:
+    """Wrapper so PDF import errors don't crash the whole pipeline."""
+    try:
+        from pipeline.pdf_extractor import extract_pdfs_from_page
+        return await extract_pdfs_from_page(html, url)
+    except Exception as exc:
+        logger.warning(f"[orchestrator] PDF extractor error: {exc}")
+        return []

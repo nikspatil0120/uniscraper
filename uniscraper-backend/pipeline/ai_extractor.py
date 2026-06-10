@@ -340,10 +340,12 @@ def calculate_page_relevance_score(page_data: dict, field_group: str) -> int:
     # ── LAYER 3: Content keyword density ─────────────────────────────────────
     FIELD_KEYWORDS = {
         "english_requirements": ["ielts", "toefl", "pte", "duolingo", "english language requirement", "language proficiency"],
-        "tuition_fees":         ["tuition fee", "course fee", "£", "per year", "per annum", "annual fee"],
-        "application_deadlines":["deadline", "closing date", "apply by", "applications close"],
+        "tuition_fees":         ["tuition fee", "course fee", "£", "$", "aud", "per year", "per annum", "annual fee", "indicative fee"],
+        "application_deadlines":["deadline", "closing date", "apply by", "applications close", "applications due", "due date", "key dates", "key application", "applications open"],
         "program_duration":     ["12 months", "24 months", "full-time", "part-time", "duration", "programme length"],
-        "intake_months":        ["september intake", "january intake", "october intake", "start date"],
+        "intake_months":        ["september intake", "january intake", "october intake", "march intake", "july intake",
+                                 "february intake", "start date", "intake", "commence", "commencement",
+                                 "march, july", "march and july", "semester 1", "semester 2"],
     }
     if field_group in FIELD_KEYWORDS:
         hits = sum(1 for kw in FIELD_KEYWORDS[field_group] if kw in content)
@@ -404,6 +406,7 @@ async def extract_fields(
     primary_url: str,
     context_hint: str = "",
     pages_data: list = None,
+    content_format: str = "html",   # "markdown" (Tier 1/2) or "html" (Tier 3)
 ) -> dict:
     """
     Hybrid extraction pipeline:
@@ -412,30 +415,47 @@ async def extract_fields(
       3. Single Gemini call with regex hints injected into prompt
       4. Regex fallback (fills nulls the LLM missed)
 
+    content_format="markdown": content is already clean fit_markdown from Crawl4AI
+      or Firecrawl — skip the clean_html() step (it would corrupt markdown tables).
+    content_format="html": legacy path — run clean_html() first.
+
     Returns dict with all _EXPECTED_KEYS (None where not found).
     """
     # ── Step 1: Clean text ────────────────────────────────────────────────────
-    if _looks_like_html(combined_text):
+    raw_chars = len(combined_text)
+
+    if content_format == "markdown":
+        # Already clean — just normalise whitespace, don't strip structure
+        cleaned = clean_text_content(combined_text)
+        print(f"[AI] Markdown input (Tier 1/2) — skipping clean_html()")
+    elif _looks_like_html(combined_text):
         cleaned = clean_html(combined_text)
     else:
         cleaned = clean_text_content(combined_text)
 
-    raw_chars = len(combined_text)
     clean_chars = len(cleaned)
 
     # ── Step 2: Field-specific context building ──────────────────────────────
     if pages_data:
-        # Each field gets its own ranked page selection — 5000 chars each
-        program_context  = build_field_specific_context(pages_data, "program_duration",      5000)
-        english_context  = build_field_specific_context(pages_data, "english_requirements",  5000)
-        fees_context     = build_field_specific_context(pages_data, "tuition_fees",          5000)
-        admission_context= build_field_specific_context(pages_data, "application_deadlines", 5000)
+        # Each field gets its own ranked page selection — 4000 chars each
+        # admission_context gets extra budget since it covers intake + deadlines
+        program_context  = build_field_specific_context(pages_data, "program_duration",      3000)
+        english_context  = build_field_specific_context(pages_data, "english_requirements",  3000)
+        fees_context     = build_field_specific_context(pages_data, "tuition_fees",          3000)
+        admission_context= build_field_specific_context(pages_data, "application_deadlines", 3000)
+        intake_context   = build_field_specific_context(pages_data, "intake_months",         2000)
+
+        # Deduplicate: if intake top page == admission top page, skip the repeat
+        intake_section = ""
+        if intake_context and intake_context.strip() != admission_context.strip():
+            intake_section = "=== INTAKE & DATES ===\n" + intake_context
 
         extraction_text = "\n\n".join(filter(None, [
             "=== PROGRAM INFORMATION ===\n"  + program_context,
             "=== ENGLISH REQUIREMENTS ===\n" + english_context,
             "=== FEES INFORMATION ===\n"     + fees_context,
             "=== ADMISSION DETAILS ===\n"    + admission_context,
+            intake_section,
         ])).strip()
 
         print(f"[ROUTING] Built targeted context: {len(extraction_text)} chars")
