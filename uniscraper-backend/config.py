@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     db_name: str = "autonova_scraper"
     max_subpages: int = 50  # increased for exhaustive crawling
     max_depth: int = 4      # crawl up to 4 levels deep
-    max_concurrent_fetches: int = 8  # parallel fetch limit
+    max_concurrent_fetches: int = 12  # parallel fetch limit — increased for speed
     min_page_words: int = 30  # minimum words to keep a page
     max_pdfs: int = 2
     llm_model: str = "gemini-2.5-flash-lite"

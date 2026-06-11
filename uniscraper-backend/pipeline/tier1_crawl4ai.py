@@ -283,14 +283,14 @@ async def deep_crawl_program_page(url: str, max_pages: int = 50) -> list[dict]:
         ignore_https_errors=True,
     )
     run_cfg = CrawlerRunConfig(
-        page_timeout=45000,  # Reduced from 60s to 45s
+        page_timeout=30000,  # Reduced from 45s to 30s — most pages load quickly
         wait_until="domcontentloaded",  # Faster than networkidle
         word_count_threshold=settings.min_page_words,
         cache_mode=CacheMode.BYPASS,
         remove_overlay_elements=True,
         remove_consent_popups=True,
         process_iframes=True,
-        js_code="await new Promise(r => setTimeout(r, 2000));",  # Reduced from 3s to 2s
+        js_code="await new Promise(r => setTimeout(r, 1000));",  # Reduced from 2s to 1s — sufficient for most content
     )
     
     pages = []

@@ -284,6 +284,9 @@ def calculate_page_relevance_score(page_data: dict, field_group: str) -> int:
     """
     Calculate relevance score for a page based on field group.
     Uses page_type + URL + content keywords with proper negative weights.
+    
+    CRITICAL FIX: University-wide admission/tuition pages (e.g., /tuition-and-fees/)
+    must score VERY HIGH for fee extraction — these pages contain the actual amounts.
     """
     url = page_data.get("url", "")
     url = url.lower() if isinstance(url, str) else ""
@@ -307,8 +310,9 @@ def calculate_page_relevance_score(page_data: dict, field_group: str) -> int:
             "tuition": -20, "scholarships": -20, "curriculum": -30,
         },
         "tuition_fees": {
-            "tuition": +80, "programme_overview": +60,  # main page often has the actual fee
-            "admissions": +10,
+            "tuition": +100,  # INCREASED: Tuition pages are the source of truth
+            "programme_overview": +40,  # REDUCED: Main page rarely has actual fees
+            "admissions": +60,  # INCREASED: Admission pages often link to tuition info
             "english_requirements": -20, "curriculum": -30,
         },
         "application_deadlines": {
@@ -328,6 +332,19 @@ def calculate_page_relevance_score(page_data: dict, field_group: str) -> int:
         score += PAGE_TYPE_SCORES[field_group].get(page_type, 0)
 
     # ── LAYER 2: URL signals ──────────────────────────────────────────────────
+    # CRITICAL: University-wide tuition pages
+    if field_group == "tuition_fees":
+        # Super high priority for actual tuition/fee pages
+        if any(pattern in url for pattern in [
+            "tuition-and-fees", "tuition-fees", "/tuition/", "/fees/",
+            "admissions-and-aid/tuition", "financial-information",
+            "cost-of-attendance", "costs-and-funding",
+        ]):
+            score += 120  # MASSIVE boost — these pages have the actual fees
+        # Medium priority for admission/aid pages
+        elif any(pattern in url for pattern in ["admissions-and-aid", "financial-aid", "funding"]):
+            score += 60
+    
     # Positive: specialized sub-pages
     if any(t in url for t in ["language", "english", "ielts", "toefl"]):
         if field_group == "english_requirements":
@@ -336,7 +353,7 @@ def calculate_page_relevance_score(page_data: dict, field_group: str) -> int:
             score -= 20
     if any(t in url for t in ["fee", "tuition", "cost", "funding"]):
         if field_group == "tuition_fees":
-            score += 40
+            score += 40  # Additional boost on top of the specific patterns above
         else:
             score -= 10
     if any(t in url for t in ["admission", "apply", "entry", "requirement"]):
@@ -349,7 +366,10 @@ def calculate_page_relevance_score(page_data: dict, field_group: str) -> int:
     # ── LAYER 3: Content keyword density ─────────────────────────────────────
     FIELD_KEYWORDS = {
         "english_requirements": ["ielts", "toefl", "pte", "duolingo", "english language requirement", "language proficiency"],
-        "tuition_fees":         ["tuition fee", "course fee", "£", "$", "aud", "per year", "per annum", "annual fee", "indicative fee"],
+        "tuition_fees":         ["tuition fee", "course fee", "tuition and fee", "per credit hour", 
+                                 "£", "$", "aud", "cad", "per year", "per annum", "annual fee", 
+                                 "indicative fee", "semester fee", "per semester",
+                                 "graduate tuition", "resident tuition", "non-resident tuition"],
         "application_deadlines":["deadline", "closing date", "apply by", "applications close", "applications due", "due date", "key dates", "key application", "applications open"],
         "program_duration":     ["12 months", "24 months", "full-time", "part-time", "duration", "programme length"],
         "intake_months":        ["september intake", "january intake", "october intake", "march intake", "july intake",
@@ -371,6 +391,9 @@ def build_field_specific_context(pages_data: list, field_group: str, max_chars: 
     
     Increased to 8000 chars per field for deeper crawling — information is often
     buried 2-3 levels deep.
+    
+    CRITICAL FIX: For tuition_fees, we MUST include university-wide fee pages
+    (like /tuition-and-fees/) with high priority, not just program-specific pages.
     """
     if not pages_data:
         return ""
@@ -383,6 +406,11 @@ def build_field_specific_context(pages_data: list, field_group: str, max_chars: 
 
     parts = []
     used = 0
+    pages_included = 0
+    
+    # For tuition_fees, be more generous with page count and char budget
+    max_pages = 5 if field_group == "tuition_fees" else 3
+    
     for score, page_data in scored:
         content = page_data.get("content", "")
         url     = page_data.get("url", "")
@@ -396,20 +424,23 @@ def build_field_specific_context(pages_data: list, field_group: str, max_chars: 
         if len(header) + len(content) <= available:
             parts.append(header + content)
             used += len(header) + len(content)
+            pages_included += 1
         else:
             # truncate to fit
             keep = available - len(header) - 30
             if keep > 500:
                 parts.append(header + content[:keep] + "\n...[truncated]")
                 used = max_chars
+                pages_included += 1
             break
 
-        if len(parts) >= 3:
+        if pages_included >= max_pages:
             break
 
     result = "\n".join(parts)
     top_url = scored[0][1].get("url", "")[-50:] if scored else ""
-    print(f"[RELEVANCE] {field_group}: {len(parts)} pages, {len(result)} chars  (top: {top_url})")
+    top_score = scored[0][0] if scored else 0
+    print(f"[RELEVANCE] {field_group}: {pages_included} pages, {len(result)} chars, top_score={top_score}  (top: {top_url})")
     return result
 
 
@@ -449,11 +480,12 @@ async def extract_fields(
 
     # ── Step 2: Field-specific context building ──────────────────────────────
     if pages_data:
-        # Each field gets its own ranked page selection — 6000-8000 chars each
+        # Each field gets its own ranked page selection — 6000-10000 chars each
         # Increased budgets for exhaustive crawling — information is often buried deep
+        # CRITICAL: Tuition fees get MORE budget because they're often on separate pages
         program_context  = build_field_specific_context(pages_data, "program_duration",      6000)
         english_context  = build_field_specific_context(pages_data, "english_requirements",  6000)
-        fees_context     = build_field_specific_context(pages_data, "tuition_fees",          6000)
+        fees_context     = build_field_specific_context(pages_data, "tuition_fees",          10000)  # INCREASED
         admission_context= build_field_specific_context(pages_data, "application_deadlines", 8000)
         intake_context   = build_field_specific_context(pages_data, "intake_months",         4000)
 

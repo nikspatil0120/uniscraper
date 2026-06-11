@@ -53,6 +53,7 @@ _DUOLINGO = re.compile(
 # ── Tuition fees ──────────────────────────────────────────────────────────────
 # Matches: "£28,500 per year", "£28500/year", "GBP 28,500", "28,500 per annum"
 # Also: "CAD 32,000", "AUD 45,000", "USD 59,750", "€15,000"
+# US format: "$590 per credit hour", "$530/credit hour"
 _FEE_PATTERN = re.compile(
     r"(?:"
     r"(£|€|\$|USD|GBP|CAD|AUD|NZD|SGD|HKD|CHF|SEK|NOK|DKK|JPY|CNY|INR)\s*"
@@ -60,24 +61,24 @@ _FEE_PATTERN = re.compile(
     r"|"
     r"([\d,]+(?:\.\d{1,2})?)\s*(£|€|\$|USD|GBP|CAD|AUD|NZD|SGD|HKD)"
     r")"
-    r"(?:\s*(?:per\s+(?:year|annum|semester|credit|module)|/year|p\.a\.|annually))?",
+    r"(?:\s*(?:per\s+(?:year|annum|semester|credit(?:\s+hour)?|module)|/year|/credit|p\.a\.|annually))?",
     re.IGNORECASE,
 )
-# Context window around fee mentions
+# Context window around fee mentions — expanded for US universities
 _FEE_CONTEXT = re.compile(
-    r"(?:tuition|fee|cost|charge|rate|price)[^\n]{0,200}",
+    r"(?:tuition|fee|cost|charge|rate|price|credit\s+hour)[^\n]{0,250}",
     re.IGNORECASE,
 )
 # Domestic/home fee context — look for UK/Home/domestic labels near fee amounts
 _DOMESTIC_FEE_CONTEXT = re.compile(
-    r"(?:UK|home|domestic|home\s+student|UK\s+student|home\s+fee)"
-    r"[^\n]{0,150}",
+    r"(?:UK|home|domestic|resident|in-state|home\s+student|UK\s+student|home\s+fee|arkansas\s+resident)"
+    r"[^\n]{0,200}",
     re.IGNORECASE,
 )
-# International fee context
+# International fee context — expanded for US universities
 _INTERNATIONAL_FEE_CONTEXT = re.compile(
-    r"(?:international|overseas|non-EU|non-UK|foreign\s+student)"
-    r"[^\n]{0,150}",
+    r"(?:international|overseas|non-EU|non-UK|non-resident|out-of-state|foreign\s+student)"
+    r"[^\n]{0,200}",
     re.IGNORECASE,
 )
 

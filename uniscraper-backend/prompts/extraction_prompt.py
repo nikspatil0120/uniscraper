@@ -18,9 +18,12 @@ STRICT RULES:
 PRECISION RULES — these are the most important:
 5. FEES: Extract BOTH domestic/home AND international fees separately when present.
    UK pages often show: "Home: £9,535/year" and "International: £33,700/year" — extract both.
-   Always include the currency symbol/code (e.g. "£9,535 per year", "CAD 32,000").
+   US pages often show: "Arkansas Resident: $530/credit hour" and "Non-Resident: $590/credit hour"
+   Always include the currency symbol/code (e.g. "£9,535 per year", "$590 per credit hour").
    Currency field: use the 3-letter code (GBP, USD, CAD, AUD, EUR, SGD).
    If only one fee is stated, put it in the most appropriate field (domestic or international).
+   IMPORTANT: The tuition fees may be on a DIFFERENT PAGE from the main program page.
+   Look for sections labeled "TUITION", "FEES INFORMATION", etc. in the combined text.
 
 6. IELTS: Extract the EXACT overall score AND band minimums if stated.
    Good: "6.5 overall, minimum 6.0 in each band"
