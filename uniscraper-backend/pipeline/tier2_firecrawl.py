@@ -75,7 +75,7 @@ async def fetch_single_page(url: str) -> dict:
             return client.scrape_url(
                 url,
                 formats=["markdown", "html", "links"],
-                only_main_content=True,
+                only_main_content=False,  # Changed to False to get full content, not just fragments
                 wait_for=2000,
             )
 
@@ -135,6 +135,9 @@ async def crawl_program_subpages(url: str, max_pages: int = 50) -> list[dict]:
     
     This handles cases where critical info (international fees, IELTS) is
     buried 2-3 levels deep in the site structure.
+    
+    Includes content deduplication to handle sites that return identical
+    content for different URLs.
     """
     from config import settings
     
@@ -143,6 +146,7 @@ async def crawl_program_subpages(url: str, max_pages: int = 50) -> list[dict]:
         return []
 
     import asyncio
+    import hashlib
     from urllib.parse import urlparse
 
     base_domain = urlparse(url).netloc
@@ -166,6 +170,13 @@ async def crawl_program_subpages(url: str, max_pages: int = 50) -> list[dict]:
     }]
     
     visited = {url.rstrip("/")}
+    content_hashes = set()  # Track content hashes for deduplication
+    
+    # Add main page hash
+    if main["markdown"]:
+        main_hash = hashlib.md5(main["markdown"].encode('utf-8')).hexdigest()
+        content_hashes.add(main_hash)
+    
     current_depth_pages = [main]
     
     # ── Multi-level crawling with depth tracking ──────────────────────────────
@@ -252,6 +263,14 @@ async def crawl_program_subpages(url: str, max_pages: int = 50) -> list[dict]:
             async with semaphore:
                 result = await fetch_single_page(candidate_url)
                 if result["word_count"] >= 50:
+                    # Check for duplicate content
+                    if result["markdown"]:
+                        content_hash = hashlib.md5(result["markdown"].encode('utf-8')).hexdigest()
+                        if content_hash in content_hashes:
+                            logger.debug(f"[tier2_firecrawl] Depth {depth} — {candidate_url} duplicate content (hash: {content_hash[:8]}), skipping")
+                            return None
+                        content_hashes.add(content_hash)
+                    
                     visited.add(candidate_url.rstrip("/"))
                     logger.info(f"[tier2_firecrawl] Depth {depth} — {candidate_url} OK ({result['word_count']} words, score={score})")
                     return {

@@ -10,6 +10,7 @@
 
 import asyncio
 import logging
+import hashlib
 import re
 
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
@@ -265,6 +266,7 @@ async def deep_crawl_program_page(url: str, max_pages: int = 50) -> list[dict]:
     
     pages = []
     visited = set()
+    content_hashes = set()  # Track content hashes to detect duplicates
     queue = [(url, 0)]  # (url, depth)
     visited.add(url.rstrip("/"))
     
@@ -287,6 +289,13 @@ async def deep_crawl_program_page(url: str, max_pages: int = 50) -> list[dict]:
                 if wc < settings.min_page_words:
                     logger.debug(f"[tier1_crawl4ai] Depth {depth} — {fetch_url} too short ({wc} words)")
                     return None
+                
+                # Check for duplicate content (e.g., Cambridge returning same template)
+                content_hash = hashlib.md5(markdown.encode('utf-8')).hexdigest()
+                if content_hash in content_hashes:
+                    logger.debug(f"[tier1_crawl4ai] Depth {depth} — {fetch_url} duplicate content (hash: {content_hash[:8]}), skipping")
+                    return None
+                content_hashes.add(content_hash)
                 
                 # Extract links for next wave
                 extracted_links = set()
