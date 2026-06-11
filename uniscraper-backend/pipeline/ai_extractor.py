@@ -407,15 +407,25 @@ def calculate_page_relevance_score(page_data: dict, field_group: str) -> int:
 
 def build_field_specific_context(pages_data: list, field_group: str, max_chars: int = 8000) -> str:
     """
-    Return the most relevant pages for a field group, sorted by score.
-    Hard cap: max_chars total. Each page is included in full unless it alone
-    exceeds the cap, in which case it is truncated.
+    Return ALL relevant pages for a field group above a relevance threshold.
     
-    Increased to 8000 chars per field for deeper crawling — information is often
-    buried 2-3 levels deep.
+    ARCHITECTURAL CHANGE (bucket-based approach):
+    - Score all pages for relevance to field_group
+    - Include ALL pages with score > threshold (not just top 1)
+    - Order by score (best first)
+    - Truncate only when hitting char limit
     
-    CRITICAL FIX: For tuition_fees, we MUST include university-wide fee pages
-    (like /tuition-and-fees/) with high priority, not just program-specific pages.
+    This ensures the LLM sees all relevant information, not just
+    the single "best" page which might not have complete info.
+    
+    Example: For tuition_fees, include:
+    - Main fees page (score=410)
+    - International fees page (score=390) 
+    - Scholarship page (score=270)
+    - Funding page (score=250)
+    
+    Let the LLM synthesize from multiple sources rather than
+    forcing the routing layer to pick a single "truth" page.
     """
     if not pages_data:
         return ""
@@ -434,15 +444,26 @@ def build_field_specific_context(pages_data: list, field_group: str, max_chars: 
                 f"  score={score:3d} url={page['url'][-70:]} "
                 f"words={page.get('word_count', 0)}"
             )
-
+    
+    # RELEVANCE THRESHOLD: Include all pages above this score
+    # - Positive score = relevant
+    # - >100 = highly relevant
+    # - >200 = critical page
+    RELEVANCE_THRESHOLD = 80
+    
     parts = []
     used = 0
     pages_included = 0
     
-    # For tuition_fees, be more generous with page count and char budget
-    max_pages = 5 if field_group == "tuition_fees" else 3
-    
     for score, page_data in scored:
+        # STOP if below relevance threshold
+        if score < RELEVANCE_THRESHOLD:
+            logger.debug(
+                f"[ai_extractor] {field_group}: stopping at score={score} "
+                f"(threshold={RELEVANCE_THRESHOLD})"
+            )
+            break
+        
         content = page_data.get("content", "")
         url     = page_data.get("url", "")
         ptype   = page_data.get("page_type", "other")
@@ -450,6 +471,7 @@ def build_field_specific_context(pages_data: list, field_group: str, max_chars: 
 
         available = max_chars - used
         if available <= 500:
+            logger.debug(f"[ai_extractor] {field_group}: char limit reached")
             break
 
         if len(header) + len(content) <= available:
@@ -457,7 +479,7 @@ def build_field_specific_context(pages_data: list, field_group: str, max_chars: 
             used += len(header) + len(content)
             pages_included += 1
         else:
-            # truncate to fit
+            # Truncate to fit
             keep = available - len(header) - 30
             if keep > 500:
                 parts.append(header + content[:keep] + "\n...[truncated]")
@@ -465,13 +487,18 @@ def build_field_specific_context(pages_data: list, field_group: str, max_chars: 
                 pages_included += 1
             break
 
-        if pages_included >= max_pages:
-            break
-
     result = "\n".join(parts)
     top_url = scored[0][1].get("url", "")[-50:] if scored else ""
     top_score = scored[0][0] if scored else 0
-    print(f"[RELEVANCE] {field_group}: {pages_included} pages, {len(result)} chars, top_score={top_score}  (top: {top_url})")
+    
+    # Count how many pages were above threshold but couldn't fit
+    above_threshold = sum(1 for score, _ in scored if score >= RELEVANCE_THRESHOLD)
+    
+    logger.info(
+        f"[ai_extractor] {field_group}: included {pages_included}/{above_threshold} "
+        f"relevant pages, {len(result)} chars, top_score={top_score}"
+    )
+    
     return result
 
 
