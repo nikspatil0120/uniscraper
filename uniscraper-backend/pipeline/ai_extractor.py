@@ -436,19 +436,23 @@ def build_field_specific_context(pages_data: list, field_group: str, max_chars: 
         reverse=True,
     )
     
-    # Debug logging for tuition_fees to see what's winning
-    if field_group == "tuition_fees":
-        logger.info("[ai_extractor] tuition_fees top pages:")
-        for score, page in scored[:5]:
+    # COMPREHENSIVE LOGGING: Show ALL scores to analyze threshold
+    if field_group in ["tuition_fees", "english_requirements"]:
+        logger.info(f"[ai_extractor] {field_group} - ALL PAGE SCORES:")
+        for i, (score, page) in enumerate(scored[:15], 1):  # Show top 15
+            url_short = page['url'][-70:] if len(page['url']) > 70 else page['url']
             logger.info(
-                f"  score={score:3d} url={page['url'][-70:]} "
-                f"words={page.get('word_count', 0)}"
+                f"  #{i:2d} score={score:3d} words={page.get('word_count', 0):5d} "
+                f"url={url_short}"
             )
+        if len(scored) > 15:
+            logger.info(f"  ... and {len(scored) - 15} more pages")
     
     # RELEVANCE THRESHOLD: Include all pages above this score
     # - Positive score = relevant
     # - >100 = highly relevant
     # - >200 = critical page
+    # TODO: After testing 20-30 universities, adjust based on empirical data
     RELEVANCE_THRESHOLD = 80
     
     parts = []
@@ -493,10 +497,22 @@ def build_field_specific_context(pages_data: list, field_group: str, max_chars: 
     
     # Count how many pages were above threshold but couldn't fit
     above_threshold = sum(1 for score, _ in scored if score >= RELEVANCE_THRESHOLD)
+    below_threshold = sum(1 for score, _ in scored if score < RELEVANCE_THRESHOLD)
+    
+    # Show score distribution for analysis
+    score_distribution = []
+    for threshold in [200, 150, 100, 80, 50, 0]:
+        count = sum(1 for score, _ in scored if score >= threshold)
+        score_distribution.append(f">={threshold}:{count}")
     
     logger.info(
         f"[ai_extractor] {field_group}: included {pages_included}/{above_threshold} "
-        f"relevant pages, {len(result)} chars, top_score={top_score}"
+        f"relevant pages (threshold={RELEVANCE_THRESHOLD}), {len(result)} chars, "
+        f"top_score={top_score}"
+    )
+    logger.info(
+        f"[ai_extractor] {field_group}: score distribution: "
+        + " | ".join(score_distribution) + f" | total={len(scored)}"
     )
     
     return result
