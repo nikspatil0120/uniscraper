@@ -190,10 +190,13 @@ async def _fetch_with_playwright(url: str) -> dict:
             await browser.close()
 
 
-async def fetch_page(url: str) -> dict:
+async def fetch_page(url: str, force_httpx: bool = False) -> dict:
     """
     Fetch a web page, trying httpx first and falling back to Playwright
     if the page appears to be JS-rendered or returns an error status.
+
+    If force_httpx=True, only httpx is used — Playwright is never attempted.
+    Use this for speculative/targeted URLs where Playwright fallback is too slow.
 
     Always returns a dict — never raises an exception.
     """
@@ -236,6 +239,20 @@ async def fetch_page(url: str) -> dict:
         logger.info(f"[fetcher] {url} — httpx failed ({e}), trying Playwright...")
 
     # --- Attempt 2: Playwright ---
+    # Skip if caller requested httpx-only (e.g. targeted recrawl for speculative URLs)
+    if force_httpx:
+        logger.debug(f"[fetcher] {url} — force_httpx=True, skipping Playwright")
+        if httpx_result:
+            return httpx_result
+        return {
+            "html": None,
+            "method_used": "httpx",
+            "status_code": None,
+            "final_url": url,
+            "word_count": 0,
+            "error": "httpx returned no content and Playwright skipped (force_httpx=True)",
+        }
+
     try:
         pw_result = await _fetch_with_playwright(url)
         

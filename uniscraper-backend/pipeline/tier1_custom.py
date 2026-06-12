@@ -6,6 +6,7 @@
 
 import asyncio
 import logging
+import re
 from urllib.parse import urljoin, urlparse
 import hashlib
 
@@ -26,7 +27,12 @@ _MIN_WORDS = 50
 
 async def fetch_single_page(url: str) -> dict:
     """
-    Fetch a single page using custom httpx + Playwright fallback.
+    Fetch a single page using httpx only (no Playwright fallback).
+    
+    Playwright is not used here because:
+    - BFS crawls speculative/linked URLs — many are 404/thin pages
+    - Playwright adds 10-30s per failed URL with no benefit
+    - The main program page already used Playwright if needed via intelligent_fetcher
     
     Returns:
     {
@@ -41,7 +47,7 @@ async def fetch_single_page(url: str) -> dict:
     logger.info(f"[tier1_custom] Fetching {url}")
     
     try:
-        result = await fetch_page(url)
+        result = await fetch_page(url, force_httpx=True)
         
         if not result.get("html"):
             return {
@@ -127,6 +133,19 @@ async def deep_crawl_program_page(
     # BFS queue: (url, depth)
     queue = [(start_url, 0)]
     visited.add(start_url)
+
+    # Pre-compute a "normalised program stem" so we can block year-variant
+    # copies of the start URL (e.g. /2024/program/CADAN when start is /2026/…)
+    # Pattern: any URL whose path matches /YYYY/<same-tail-as-start>
+    _year_variant_pattern = None
+    _start_parsed = urlparse(start_url)
+    _start_path = _start_parsed.path.rstrip("/")
+    _year_match = re.match(r'^(/\d{4})(/.+)$', _start_path)
+    if _year_match:
+        _program_tail = re.escape(_year_match.group(2))  # e.g. /program/CADAN
+        _year_variant_pattern = re.compile(
+            r'^/\d{4}' + _program_tail + r'(/.*)?$'
+        )
     
     # Track critical pages for early exit
     critical_pages_found = {
@@ -157,8 +176,10 @@ async def deep_crawl_program_page(
                 logger.warning(f"[tier1_custom] {url} — exception: {result}")
                 continue
             
+            # Skip thin pages (redirected to 404, error pages, etc.)
+            # Don't attempt Playwright — if httpx got < _MIN_WORDS, it's a dead end.
             if not result.get("markdown") or result["word_count"] < _MIN_WORDS:
-                logger.debug(f"[tier1_custom] {url} — insufficient content ({result['word_count']} words)")
+                logger.debug(f"[tier1_custom] {url} — insufficient content ({result['word_count']} words), skipping")
                 continue
             
             # Content deduplication
@@ -203,6 +224,32 @@ async def deep_crawl_program_page(
             if depth < max_depth and len(pages_data) < max_pages:
                 for link in result.get("links", []):
                     if link not in visited:
+                        link_path = urlparse(link).path
+
+                        # ── SKIP 1: individual course catalogue pages ─────────
+                        # e.g. /2024/course/COMP6730, /2025/course/STAT7055
+                        if re.search(r'/\d{4}/course/', link):
+                            logger.debug(f"[tier1_custom] Skipping course catalogue URL: {link}")
+                            continue
+
+                        # ── SKIP 2: year-variant copies of the start program ──
+                        # e.g. /2024/program/CADAN when start is /2026/program/CADAN
+                        # These are identical content from other catalogue years.
+                        if _year_variant_pattern and _year_variant_pattern.match(link_path):
+                            # Allow the start URL's own year — block all others
+                            if not link.rstrip("/").endswith(start_url.rstrip("/").split("://", 1)[-1].split("/", 1)[-1]):
+                                logger.debug(f"[tier1_custom] Skipping year-variant URL: {link}")
+                                continue
+
+                        # ── SKIP 3: semester navigation pages ─────────────────
+                        if any(pat in link for pat in [
+                            "/First%20Semester/", "/Second%20Semester/",
+                            "/Semester/", "/semester/",
+                        ]):
+                            logger.debug(f"[tier1_custom] Skipping semester nav URL: {link}")
+                            continue
+
+                        # ─────────────────────────────────────────────────────
                         visited.add(link)
                         queue.append((link, depth + 1))
         

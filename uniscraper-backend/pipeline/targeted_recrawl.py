@@ -6,9 +6,15 @@
 #   2. Generate candidate URLs for missing page types
 #   3. Attempt to fetch each candidate (HTTP HEAD first for efficiency)
 #   4. Return successful pages with content
+#
+# NOTE: These are speculative URLs — many will 404.
+# We use httpx-only and discard thin pages immediately.
+# Playwright is NOT attempted here: it adds 10-30s per failed URL
+# and speculative URLs are almost always empty if httpx gets < 100 words.
 
 import asyncio
 import logging
+import re
 from urllib.parse import urlparse
 
 import httpx
@@ -106,36 +112,50 @@ async def targeted_recrawl(
                         logger.debug(f"[targeted_recrawl] {url} returned {head_resp.status_code}")
                         return None
                 
-                # Page exists, fetch full content
+                # Page exists, fetch full content via httpx only
+                # NOTE: We deliberately skip Playwright here.
+                # These are speculative URLs — if httpx gets < 100 words the page
+                # is almost certainly a 404/error page. Playwright would also fail
+                # and wastes 10-30 extra seconds per URL.
                 logger.info(f"[targeted_recrawl] Fetching {url}")
-                result = await fetch_page(url)
+                result = await fetch_page(url, force_httpx=True)
                 
                 if result.get("error"):
                     logger.debug(f"[targeted_recrawl] {url} fetch error: {result['error']}")
                     return None
                 
                 html = result.get("html", "")
-                word_count = result.get("word_count", 0)
+                word_count = result.get("word_count", 0) or len(html.split())
                 
-                if word_count < 50:
-                    logger.debug(f"[targeted_recrawl] {url} too thin ({word_count} words)")
+                # Thin content check — if httpx got < 100 words, it's almost
+                # certainly a 404/empty page. Skip immediately, don't try Playwright.
+                if word_count < 100:
+                    logger.debug(
+                        f"[targeted_recrawl] {url} — thin ({word_count} words), skipping"
+                    )
                     return None
                 
                 # Clean and classify
                 content = clean_html(html) if html else ""
+                content_words = len(content.split())
+                
+                if content_words < 50:
+                    logger.debug(f"[targeted_recrawl] {url} too thin after cleaning ({content_words} words)")
+                    return None
+                
                 page_type = classify_page(url, content)
                 
                 logger.info(
-                    f"[targeted_recrawl] ✅ {url} ({page_type}, {word_count} words)"
+                    f"[targeted_recrawl] ✅ {url} ({page_type}, {content_words} words)"
                 )
                 
                 return {
                     "url": result.get("final_url", url),
                     "content": content,
                     "page_type": page_type,
-                    "word_count": len(content.split()),
+                    "word_count": content_words,
                     "method": result.get("method_used", "httpx"),
-                    "tier": 1,  # Targeted recrawl uses tier 1 (custom fetcher)
+                    "tier": 1,
                     "html": html,
                 }
                 
