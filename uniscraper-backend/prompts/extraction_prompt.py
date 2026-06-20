@@ -9,18 +9,63 @@ plus a REGEX PRE-EXTRACTION block showing values already found by pattern matchi
 
 Your task: extract ALL fields listed below with maximum precision.
 
-STRICT RULES:
-1. Return ONLY valid JSON. No prose, no markdown, no code fences, no explanation.
-2. Return null for any field not explicitly stated in the text. Never guess.
-3. Never hallucinate. Every value must be directly supported by the source text.
-4. Ignore unrelated content (news, events, staff profiles, research, alumni).
+STRICT ANTI-HALLUCINATION RULES:
+1. NEVER use prior knowledge or training data
+2. NEVER estimate, invent, or guess any values
+3. NEVER infer IELTS, TOEFL, PTE, Duolingo, GPA, tuition fees, deadlines, or requirements
+4. Return ONLY valid JSON. No prose, no markdown, no code fences, no explanation.
+5. Return null for any field not explicitly stated in the text.
+6. Every value must be directly supported by the source text.
+7. Ignore unrelated content (news, events, staff profiles, research, alumni).
+8. Accuracy is MORE IMPORTANT than completeness.
+
+If a field cannot be found in the provided text:
+- Return null
+- Do NOT use external knowledge
+- Do NOT make assumptions
 
 PRECISION RULES — these are the most important:
 5. FEES: Extract BOTH domestic/home AND international fees separately when present.
-   UK pages often show: "Home: £9,535/year" and "International: £33,700/year" — extract both.
-   Always include the currency symbol/code (e.g. "£9,535 per year", "CAD 32,000").
+   
+   **FOCUS ON MASTERS/GRADUATE PROGRAMS:** Ignore undergraduate fees.
+   
+   **BREAKDOWN HANDLING:**
+   - If a detailed cost breakdown table is provided (common on US university pages), extract:
+     a) Total cost → domestic or international field (with any additional non-resident fees added)
+     b) Full itemized breakdown → breakdown field
+   
+   - **LOOK FOR TABLES** with columns like "Graduate" or "Graduate*" and rows like:
+     * Tuition & Fees / Tuition and Fees
+     * Books / Books & Supplies
+     * Room & Board / Room and Board / Housing
+     * Personal / Personal Expenses
+     * Transportation
+     * Total
+   
+   - **NUMBER RECOGNITION**: Cost values may appear WITHOUT dollar signs in HTML tables (e.g., "7,556" or "28,356").
+     These are still valid USD amounts - treat them as currency values.
+   
+   - **FORMAT FOR BREAKDOWN FIELD**: Use pipe-separated format like:
+     "Tuition & Fees: $7,556 | Books: $1,250 | Room & Board: $13,190 | Personal: $2,790 | Transportation: $3,570 | Total: $28,356"
+   
+   - **NON-RESIDENT FEES**: If there's an additional fee for non-residents (e.g., "Graduate Non-Residents Add: $5,922"):
+     * Add this to the total in the main field
+     * Include it in the breakdown
+     * Example: domestic: "$34,278 (Total $28,356 + Non-Resident $5,922)"
+   
+   - **CALCULATION**: Always calculate the correct total if you see a breakdown table with a Graduate column
+   
+   **EXAMPLES:**
+   - UK pages: "Home: £9,535/year" and "International: £33,700/year" — extract both.
+   - US pages: "Arkansas Resident: $530/credit hour" and "Non-Resident: $590/credit hour"
+   - Breakdown pages: Extract total AND itemized breakdown
+   
+   Always include the currency symbol/code (e.g. "£9,535 per year", "$590 per credit hour").
    Currency field: use the 3-letter code (GBP, USD, CAD, AUD, EUR, SGD).
    If only one fee is stated, put it in the most appropriate field (domestic or international).
+   
+   IMPORTANT: The tuition fees may be on a DIFFERENT PAGE from the main program page.
+   Look for sections labeled "TUITION", "FEES INFORMATION", "ESTIMATED COSTS", "COST OF ATTENDANCE" etc.
 
 6. IELTS: Extract the EXACT overall score AND band minimums if stated.
    Good: "6.5 overall, minimum 6.0 in each band"
@@ -67,6 +112,7 @@ Return exactly this JSON structure (no extra keys):
     "domestic": null,
     "international": null,
     "currency": null,
+    "breakdown": null,
     "notes": null
   },
   "other_fees": null,

@@ -13,15 +13,23 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
     mongodb_uri: str = "mongodb://localhost:27017"
     db_name: str = "autonova_scraper"
-    max_subpages: int = 4
+    max_subpages: int = 20  # reduced from 50 — most relevant pages are in depth 0-1
+    max_depth: int = 4      # crawl up to 4 levels deep
+    max_concurrent_fetches: int = 12  # parallel fetch limit — increased for speed
+    min_page_words: int = 30  # minimum words to keep a page
     max_pdfs: int = 2
     llm_model: str = "gemini-2.5-flash-lite"
     llm_max_tokens: int = 4000
-    llm_context_limit: int = 16000
+    llm_context_limit: int = 50000  # increased to 50k chars (well within 1M token limit)
     scrape_delay_seconds: int = 7   # delay between scrapes when testing multiple URLs
     # Raw comma-separated string from .env — use cors_origins_list property in app code
     cors_origins: str = "http://localhost:5173"
     log_level: str = "INFO"
+
+    # ── Three-tier fetching pipeline ──────────────────────────────────────────
+    firecrawl_api_key: str = ""
+    crawl4ai_enabled: bool = True
+    firecrawl_enabled: bool = True
 
     @property
     def cors_origins_list(self) -> List[str]:

@@ -55,6 +55,9 @@ CONTENT_PATTERNS = {
 
 def classify_page_by_url(url: str) -> str:
     """Classify page type based on URL patterns."""
+    # Ensure url is a string
+    if not isinstance(url, str):
+        url = str(url) if url else ""
     url_lower = url.lower()
     
     for page_type, patterns in URL_PATTERNS.items():
@@ -65,6 +68,9 @@ def classify_page_by_url(url: str) -> str:
 
 def classify_page_by_content(content: str, url: str = "") -> str:
     """Classify page type based on content patterns."""
+    # Ensure content is a string
+    if not isinstance(content, str):
+        content = str(content) if content else ""
     content_lower = content.lower()
     
     # Score each page type

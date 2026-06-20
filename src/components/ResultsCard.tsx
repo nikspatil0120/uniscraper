@@ -125,6 +125,7 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
           { label: "International tuition", value: fees.international },
           { label: "Domestic tuition", value: fees.domestic },
           { label: "Currency", value: fees.currency },
+          { label: "Cost breakdown", value: fees.breakdown },
           { label: "Fee notes", value: fees.notes },
           { label: "Other fees", value: data.other_fees },
         ],
@@ -232,6 +233,18 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
           <div className="flex flex-wrap gap-2 mt-4">
             {!fmt(data.degree_level).missing && <Badge>{data.degree_level}</Badge>}
             {!fmt(data.program_duration).missing && <Badge>{data.program_duration}</Badge>}
+            {data.tier_used && (
+              <Badge tone="accent">
+                Tier {data.tier_used} — {
+                  data.tier_used === 1 ? "Custom" : 
+                  data.tier_used === 2 ? "Firecrawl" : 
+                  "Crawl4AI"
+                }
+              </Badge>
+            )}
+            {data.pages_fetched && data.pages_fetched > 1 && (
+              <Badge tone="accent">{data.pages_fetched} pages</Badge>
+            )}
           </div>
         </div>
         
@@ -245,7 +258,7 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
         >
           <CheckCircle2 size={13} style={{ color: "var(--accent)" }} />
           <span className="font-ui uppercase text-[10px] font-bold tracking-widest text-text-secondary">
-            Compiled <span className="font-mono text-accent text-[11px]">{extractedCount}</span> fields
+            Success <span className="font-mono text-accent text-[11px]">{extractedCount}</span> fields
           </span>
         </div>
       </div>
@@ -382,7 +395,7 @@ export function ResultsCard({ data }: { data: ScrapeRecord }) {
 
 export function StatusBadge({ status }: { status: string }) {
   const tone = status === "success" ? "accent" : status === "failed" ? "error" : "warn";
-  return <Badge tone={tone as "accent" | "warn" | "error"}>{status === "success" ? "compiled" : status === "failed" ? "failed" : "partial"}</Badge>;
+  return <Badge tone={tone as "accent" | "warn" | "error"}>{status === "success" ? "success" : status === "failed" ? "failed" : "partial"}</Badge>;
 }
 
 export { Badge };

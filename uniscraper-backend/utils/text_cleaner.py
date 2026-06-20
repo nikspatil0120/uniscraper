@@ -52,6 +52,13 @@ def clean_html(html: str) -> str:
     for btn in soup.find_all("button"):
         btn.replace_with(btn.get_text(separator=" "))
 
+    # ── Special handling for tables to preserve structure ────────────────────
+    # Convert tables to formatted text before general text extraction
+    # This helps LLMs understand cost breakdowns and data in tabular format
+    for table in soup.find_all("table"):
+        table_text = _table_to_text(table)
+        table.replace_with(f"\n\n{table_text}\n\n")
+
     content_el = None
     for selector in _CONTENT_SELECTORS:
         content_el = soup.select_one(selector)
@@ -60,6 +67,92 @@ def clean_html(html: str) -> str:
 
     raw_text = content_el.get_text(separator="\n") if content_el else soup.get_text(separator="\n")
     return clean_text_content(raw_text)
+
+
+def _table_to_text(table) -> str:
+    """
+    Convert HTML table to readable plain text format.
+    Preserves column structure with pipe separators.
+    
+    Example output:
+    | Tuition & Fees | Books | Room & Board | Total |
+    | 7,556 | 1,250 | 13,190 | 28,356 |
+    """
+    rows = []
+    
+    # Get all rows from thead and tbody
+    for row in table.find_all("tr"):
+        cells = []
+        for cell in row.find_all(["th", "td"]):
+            # Get cell text and clean it
+            cell_text = cell.get_text(separator=" ", strip=True)
+            # Collapse multiple spaces
+            cell_text = " ".join(cell_text.split())
+            cells.append(cell_text)
+        
+        if cells:  # Only add non-empty rows
+            # Join cells with pipe separator
+            rows.append("| " + " | ".join(cells) + " |")
+    
+    return "\n".join(rows) if rows else ""
+
+
+# ── Markdown noise stripping ─────────────────────────────────────────────────
+
+# Melbourne and similar sites embed large SVG logos as data: URIs in markdown.
+# Pattern: [![alt text](data:image/...very long...)](url)
+# The SVG blob can span multiple lines and be 10-50KB.
+# We need to strip these before any text processing.
+
+# Matches the inner image part: ![alt](data:...)
+_DATA_URI_IMG_RE = re.compile(
+    r'!\[[^\]]*\]\(data:[^)]{20,}\)',
+    re.DOTALL,
+)
+
+# Matches linked images wrapping data URIs: [![alt](data:...)](url)
+_LINKED_DATA_URI_RE = re.compile(
+    r'\[!\[[^\]]*\]\(data:[^\)]{20,}\)\]\([^\)]*\)',
+    re.DOTALL,
+)
+
+# URL-encoded SVG blobs appearing directly in text/links (%3csvg...)
+_ENCODED_SVG_RE = re.compile(
+    r'%3[cC]svg[A-Za-z0-9%._~:/?#\[\]@!$&\'()*+,;=\-]{30,}',
+    re.DOTALL,
+)
+
+# Bare data: URIs (in case they appear outside markdown image syntax)
+_DATA_URI_BARE_RE = re.compile(
+    r'data:image/[^\s\)"\'>]{20,}',
+    re.DOTALL,
+)
+
+
+def strip_markdown_noise(text: str) -> str:
+    """
+    Remove noise from Firecrawl/Crawl4AI markdown before sending to the LLM:
+      - Linked data: URI images: [![alt](data:image/...)](url)
+      - Inline data: URI images: ![alt](data:image/...)
+      - URL-encoded SVG blobs in links/text
+      - Bare data: URI references
+    Leaves all real text, links, and tables intact.
+    """
+    # The Melbourne SVG blob is a single-line URL-encoded string inside
+    # a markdown image link. Strip any markdown link/image whose URL starts
+    # with data: — match up to the closing paren of the URL.
+    # Use a non-greedy match to handle cases where multiple appear on one line.
+    text = re.sub(r'!\[[^\]]*\]\(data:[^)]*\)', '', text)
+    # Also strip linked images with data URIs: [![...](data:...)](url)
+    text = re.sub(r'\[!\[[^\]]*\]\(data:[^)]*\)\]\([^)]*\)', '', text)
+    # Strip any remaining bare data: URIs (fallback)
+    text = re.sub(r'data:image/\S{10,}', '[image]', text)
+    # Strip URL-encoded SVG fragments (%3csvg or %3Csvg) and everything after
+    # them until whitespace — these appear as part of longer URL strings
+    text = re.sub(r'%3[cC]svg\S{20,}', '', text)
+    # Collapse blank lines created by stripping
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
 
 
 # ── Plain-text deep cleaner ───────────────────────────────────────────────────
@@ -93,6 +186,7 @@ def clean_text_content(text: str) -> str:
     """
     Deep-clean plain text extracted from a web page.
 
+    - Strips inline data: URI images and SVG blobs (Firecrawl/Crawl4AI noise)
     - Removes cookie/privacy/accessibility boilerplate
     - Removes repeated navigation items
     - Removes lines shorter than 4 chars
@@ -100,6 +194,8 @@ def clean_text_content(text: str) -> str:
     - Deduplicates identical consecutive lines
     - Preserves lines containing admission-relevant keywords
     """
+    # Strip data URI images / SVG blobs first — they inflate word counts massively
+    text = strip_markdown_noise(text)
     lines = text.splitlines()
     cleaned: list[str] = []
     seen: set[str] = set()

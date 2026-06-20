@@ -15,6 +15,10 @@ def validate_program_duration(duration: str, degree_level: str) -> tuple[str, Op
     """
     if not duration:
         return duration, None
+    
+    # Handle case where duration might not be a string
+    if not isinstance(duration, str):
+        duration = str(duration)
         
     duration_lower = duration.lower()
     
@@ -59,7 +63,15 @@ def validate_gpa_requirement(gpa: str, context_text: str = "") -> tuple[str, Opt
     if not gpa:
         return gpa, None
     
+    # Handle case where gpa might not be a string
+    if not isinstance(gpa, str):
+        gpa = str(gpa)
+    
     gpa_lower = gpa.lower()
+    
+    # Handle context_text being non-string
+    if not isinstance(context_text, str):
+        context_text = str(context_text) if context_text else ""
     context_lower = context_text.lower()
     
     # Red flags that suggest this is NOT an admission requirement

@@ -284,10 +284,22 @@ def calculate_page_relevance_score(page_data: dict, field_group: str) -> int:
     """
     Calculate relevance score for a page based on field group.
     Uses page_type + URL + content keywords with proper negative weights.
+    
+    CRITICAL FIX: University-wide admission/tuition pages (e.g., /tuition-and-fees/)
+    must score VERY HIGH for fee extraction — these pages contain the actual amounts.
     """
-    url = page_data.get("url", "").lower()
+    url = page_data.get("url", "")
+    url = url.lower() if isinstance(url, str) else ""
+    
     page_type = page_data.get("page_type", "other")
-    content = page_data.get("content", "").lower()
+    
+    content = page_data.get("content", "")
+    # Handle case where content might be a list (defensive programming)
+    if isinstance(content, list):
+        content = " ".join(str(item) for item in content)
+    elif not isinstance(content, str):
+        content = str(content) if content else ""
+    content = content.lower()
 
     score = 50  # base
 
@@ -298,8 +310,9 @@ def calculate_page_relevance_score(page_data: dict, field_group: str) -> int:
             "tuition": -20, "scholarships": -20, "curriculum": -30,
         },
         "tuition_fees": {
-            "tuition": +80, "programme_overview": +60,  # main page often has the actual fee
-            "admissions": +10,
+            "tuition": +100,  # INCREASED: Tuition pages are the source of truth
+            "programme_overview": +40,  # REDUCED: Main page rarely has actual fees
+            "admissions": +60,  # INCREASED: Admission pages often link to tuition info
             "english_requirements": -20, "curriculum": -30,
         },
         "application_deadlines": {
@@ -319,6 +332,41 @@ def calculate_page_relevance_score(page_data: dict, field_group: str) -> int:
         score += PAGE_TYPE_SCORES[field_group].get(page_type, 0)
 
     # ── LAYER 2: URL signals ──────────────────────────────────────────────────
+    # CRITICAL: University-wide tuition pages
+    if field_group == "tuition_fees":
+        # MAXIMUM priority for actual tuition/fee pages
+        TUITION_EXACT_URLS = [
+            "tuition-and-fees",
+            "tuition_and_fees",
+            "cost-of-attendance",
+            "tuition-fees",
+            "graduate-tuition",
+            "tuition/",
+            "/fees/graduate",
+            "/fees/international",
+            "admissions-and-aid/tuition",
+            "admissions/tuition",
+            "bursar",
+            "student-accounts",
+        ]
+        
+        if any(pattern in url for pattern in TUITION_EXACT_URLS):
+            score += 200  # This page almost certainly has fees
+        
+        # PENALISE constructed/fake sub-pages
+        # These are URLs that end in /fees but were constructed
+        # by appending /fees to a .html page URL
+        if (url.endswith(".html/fees") or
+            ".html/entry-requirements" in url or
+            ".html/how-to-apply" in url or
+            ".html/overview" in url or
+            ".html/english" in url):
+            score -= 100  # These are fake constructed URLs
+        
+        # Medium priority for admission/aid pages (if not already boosted)
+        elif any(pattern in url for pattern in ["admissions-and-aid", "financial-aid", "funding"]):
+            score += 60
+    
     # Positive: specialized sub-pages
     if any(t in url for t in ["language", "english", "ielts", "toefl"]):
         if field_group == "english_requirements":
@@ -327,7 +375,7 @@ def calculate_page_relevance_score(page_data: dict, field_group: str) -> int:
             score -= 20
     if any(t in url for t in ["fee", "tuition", "cost", "funding"]):
         if field_group == "tuition_fees":
-            score += 40
+            score += 40  # Additional boost on top of the specific patterns above
         else:
             score -= 10
     if any(t in url for t in ["admission", "apply", "entry", "requirement"]):
@@ -340,10 +388,15 @@ def calculate_page_relevance_score(page_data: dict, field_group: str) -> int:
     # ── LAYER 3: Content keyword density ─────────────────────────────────────
     FIELD_KEYWORDS = {
         "english_requirements": ["ielts", "toefl", "pte", "duolingo", "english language requirement", "language proficiency"],
-        "tuition_fees":         ["tuition fee", "course fee", "£", "per year", "per annum", "annual fee"],
-        "application_deadlines":["deadline", "closing date", "apply by", "applications close"],
+        "tuition_fees":         ["tuition fee", "course fee", "tuition and fee", "per credit hour", 
+                                 "£", "$", "aud", "cad", "per year", "per annum", "annual fee", 
+                                 "indicative fee", "semester fee", "per semester",
+                                 "graduate tuition", "resident tuition", "non-resident tuition"],
+        "application_deadlines":["deadline", "closing date", "apply by", "applications close", "applications due", "due date", "key dates", "key application", "applications open"],
         "program_duration":     ["12 months", "24 months", "full-time", "part-time", "duration", "programme length"],
-        "intake_months":        ["september intake", "january intake", "october intake", "start date"],
+        "intake_months":        ["september intake", "january intake", "october intake", "march intake", "july intake",
+                                 "february intake", "start date", "intake", "commence", "commencement",
+                                 "march, july", "march and july", "semester 1", "semester 2"],
     }
     if field_group in FIELD_KEYWORDS:
         hits = sum(1 for kw in FIELD_KEYWORDS[field_group] if kw in content)
@@ -352,11 +405,27 @@ def calculate_page_relevance_score(page_data: dict, field_group: str) -> int:
     return max(0, score)
 
 
-def build_field_specific_context(pages_data: list, field_group: str, max_chars: int = 5000) -> str:
+def build_field_specific_context(pages_data: list, field_group: str, max_chars: int = 8000) -> str:
     """
-    Return the most relevant pages for a field group, sorted by score.
-    Hard cap: max_chars total. Each page is included in full unless it alone
-    exceeds the cap, in which case it is truncated.
+    Return ALL relevant pages for a field group above a relevance threshold.
+    
+    ARCHITECTURAL CHANGE (bucket-based approach):
+    - Score all pages for relevance to field_group
+    - Include ALL pages with score > threshold (not just top 1)
+    - Order by score (best first)
+    - Truncate only when hitting char limit
+    
+    This ensures the LLM sees all relevant information, not just
+    the single "best" page which might not have complete info.
+    
+    Example: For tuition_fees, include:
+    - Main fees page (score=410)
+    - International fees page (score=390) 
+    - Scholarship page (score=270)
+    - Funding page (score=250)
+    
+    Let the LLM synthesize from multiple sources rather than
+    forcing the routing layer to pick a single "truth" page.
     """
     if not pages_data:
         return ""
@@ -366,10 +435,39 @@ def build_field_specific_context(pages_data: list, field_group: str, max_chars: 
         key=lambda x: x[0],
         reverse=True,
     )
-
+    
+    # COMPREHENSIVE LOGGING: Show ALL scores to analyze threshold
+    if field_group in ["tuition_fees", "english_requirements"]:
+        logger.info(f"[ai_extractor] {field_group} - ALL PAGE SCORES:")
+        for i, (score, page) in enumerate(scored[:15], 1):  # Show top 15
+            url_short = page['url'][-70:] if len(page['url']) > 70 else page['url']
+            logger.info(
+                f"  #{i:2d} score={score:3d} words={page.get('word_count', 0):5d} "
+                f"url={url_short}"
+            )
+        if len(scored) > 15:
+            logger.info(f"  ... and {len(scored) - 15} more pages")
+    
+    # RELEVANCE THRESHOLD: Include all pages above this score
+    # - Positive score = relevant
+    # - >100 = highly relevant
+    # - >200 = critical page
+    # TODO: After testing 20-30 universities, adjust based on empirical data
+    RELEVANCE_THRESHOLD = 80
+    
     parts = []
     used = 0
+    pages_included = 0
+    
     for score, page_data in scored:
+        # STOP if below relevance threshold
+        if score < RELEVANCE_THRESHOLD:
+            logger.debug(
+                f"[ai_extractor] {field_group}: stopping at score={score} "
+                f"(threshold={RELEVANCE_THRESHOLD})"
+            )
+            break
+        
         content = page_data.get("content", "")
         url     = page_data.get("url", "")
         ptype   = page_data.get("page_type", "other")
@@ -377,25 +475,46 @@ def build_field_specific_context(pages_data: list, field_group: str, max_chars: 
 
         available = max_chars - used
         if available <= 500:
+            logger.debug(f"[ai_extractor] {field_group}: char limit reached")
             break
 
         if len(header) + len(content) <= available:
             parts.append(header + content)
             used += len(header) + len(content)
+            pages_included += 1
         else:
-            # truncate to fit
+            # Truncate to fit
             keep = available - len(header) - 30
             if keep > 500:
                 parts.append(header + content[:keep] + "\n...[truncated]")
                 used = max_chars
-            break
-
-        if len(parts) >= 3:
+                pages_included += 1
             break
 
     result = "\n".join(parts)
     top_url = scored[0][1].get("url", "")[-50:] if scored else ""
-    print(f"[RELEVANCE] {field_group}: {len(parts)} pages, {len(result)} chars  (top: {top_url})")
+    top_score = scored[0][0] if scored else 0
+    
+    # Count how many pages were above threshold but couldn't fit
+    above_threshold = sum(1 for score, _ in scored if score >= RELEVANCE_THRESHOLD)
+    below_threshold = sum(1 for score, _ in scored if score < RELEVANCE_THRESHOLD)
+    
+    # Show score distribution for analysis
+    score_distribution = []
+    for threshold in [200, 150, 100, 80, 50, 0]:
+        count = sum(1 for score, _ in scored if score >= threshold)
+        score_distribution.append(f">={threshold}:{count}")
+    
+    logger.info(
+        f"[ai_extractor] {field_group}: included {pages_included}/{above_threshold} "
+        f"relevant pages (threshold={RELEVANCE_THRESHOLD}), {len(result)} chars, "
+        f"top_score={top_score}"
+    )
+    logger.info(
+        f"[ai_extractor] {field_group}: score distribution: "
+        + " | ".join(score_distribution) + f" | total={len(scored)}"
+    )
+    
     return result
 
 
@@ -404,6 +523,7 @@ async def extract_fields(
     primary_url: str,
     context_hint: str = "",
     pages_data: list = None,
+    content_format: str = "html",   # "markdown" (Tier 1/2) or "html" (Tier 3)
 ) -> dict:
     """
     Hybrid extraction pipeline:
@@ -412,30 +532,48 @@ async def extract_fields(
       3. Single Gemini call with regex hints injected into prompt
       4. Regex fallback (fills nulls the LLM missed)
 
+    content_format="markdown": content is already clean fit_markdown from Crawl4AI
+      or Firecrawl — skip the clean_html() step (it would corrupt markdown tables).
+    content_format="html": legacy path — run clean_html() first.
+
     Returns dict with all _EXPECTED_KEYS (None where not found).
     """
     # ── Step 1: Clean text ────────────────────────────────────────────────────
-    if _looks_like_html(combined_text):
+    raw_chars = len(combined_text)
+
+    if content_format == "markdown":
+        # Already clean — just normalise whitespace, don't strip structure
+        cleaned = clean_text_content(combined_text)
+        print(f"[AI] Markdown input (Tier 1/2) — skipping clean_html()")
+    elif _looks_like_html(combined_text):
         cleaned = clean_html(combined_text)
     else:
         cleaned = clean_text_content(combined_text)
 
-    raw_chars = len(combined_text)
     clean_chars = len(cleaned)
 
     # ── Step 2: Field-specific context building ──────────────────────────────
     if pages_data:
-        # Each field gets its own ranked page selection — 5000 chars each
-        program_context  = build_field_specific_context(pages_data, "program_duration",      5000)
-        english_context  = build_field_specific_context(pages_data, "english_requirements",  5000)
-        fees_context     = build_field_specific_context(pages_data, "tuition_fees",          5000)
-        admission_context= build_field_specific_context(pages_data, "application_deadlines", 5000)
+        # Each field gets its own ranked page selection — 6000-10000 chars each
+        # Increased budgets for exhaustive crawling — information is often buried deep
+        # CRITICAL: Tuition fees get MORE budget because they're often on separate pages
+        program_context  = build_field_specific_context(pages_data, "program_duration",      6000)
+        english_context  = build_field_specific_context(pages_data, "english_requirements",  6000)
+        fees_context     = build_field_specific_context(pages_data, "tuition_fees",          10000)  # INCREASED
+        admission_context= build_field_specific_context(pages_data, "application_deadlines", 8000)
+        intake_context   = build_field_specific_context(pages_data, "intake_months",         4000)
+
+        # Deduplicate: if intake top page == admission top page, skip the repeat
+        intake_section = ""
+        if intake_context and intake_context.strip() != admission_context.strip():
+            intake_section = "=== INTAKE & DATES ===\n" + intake_context
 
         extraction_text = "\n\n".join(filter(None, [
             "=== PROGRAM INFORMATION ===\n"  + program_context,
             "=== ENGLISH REQUIREMENTS ===\n" + english_context,
             "=== FEES INFORMATION ===\n"     + fees_context,
             "=== ADMISSION DETAILS ===\n"    + admission_context,
+            intake_section,
         ])).strip()
 
         print(f"[ROUTING] Built targeted context: {len(extraction_text)} chars")

@@ -208,7 +208,7 @@ function HistoryPage() {
             </colgroup>
             <thead>
               <tr style={{ borderBottom: "1px solid #EDE5DC", background: "#FBF7F3" }}>
-                {["University", "Program", "Degree", "Status", "Date Compiled"].map((h) => (
+                {["University", "Program", "Degree", "Status", "Date Processed"].map((h) => (
                   <th
                     key={h}
                     className="font-ui uppercase text-[9px] font-bold tracking-widest-2"
@@ -422,7 +422,7 @@ function HistoryPage() {
                 className="font-ui uppercase text-[10px] font-bold tracking-widest-2"
                 style={{ color: "#C4B5AA" }}
               >
-                Compilation Sheet
+                Results Sheet
               </div>
               <button
                 onClick={() => setDrawerId(null)}

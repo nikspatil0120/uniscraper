@@ -1,0 +1,677 @@
+<!DOCTYPE HTML><html lang="en" class="is-loading-page is-loading-data has-open-ctas">
+   <head>
+      <meta charset="UTF-8">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      <title>Estimate Your Costs | Arkansas State University</title>
+      <link rel="canonical" href="https://www.astate.edu/admissions-and-aid/tuition-and-fees/estimate-your-costs.html">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css">
+<link rel="stylesheet" href="/_resources/css/main.css?v=5">
+<!-- OmniUpdate developer stylesheet -->
+<link rel="stylesheet" href="/_resources/css/omniupdate.css">
+<!-- Custom CMS stylesheet -->
+<link rel="stylesheet" href="/_resources/css/custom.css">
+
+<!-- Favicon Generator Icons Begin -->
+<link rel="apple-touch-icon" sizes="180x180" href="/_resources/assets/favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/_resources/assets/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/_resources/assets/favicon/favicon-16x16.png">
+<link rel="manifest" href="/_resources/assets/favicon/site.webmanifest">
+<link rel="mask-icon" href="/_resources/assets/favicon/safari-pinned-tab.svg" color="#cc092f">
+<link rel="shortcut icon" href="/_resources/assets/favicon/favicon.ico">
+<meta name="msapplication-TileColor" content="#ffffff">
+<meta name="msapplication-config" content="/_resources/assets/favicon/browserconfig.xml">
+<meta name="theme-color" content="#ffffff">
+
+<script>
+	if (!localStorage.getItem('hasLoaded')) {
+		localStorage.setItem('hasLoaded', 'true');
+		setTimeout(() => {
+			document.documentElement.classList.remove('is-loading-data');
+		}, 200);
+		setTimeout(() => {
+			document.documentElement.classList.remove('is-loading-page');
+		}, 600);
+	} else {
+		document.documentElement.classList.remove('is-loading-page');
+		document.documentElement.classList.remove('is-loading-data');
+	}
+</script>
+
+<!-- Favicon Generator Icons End --><!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-5VGR7265');</script>
+<!-- End Google Tag Manager -->      <meta property="og:title" content="Estimate Your Costs | Arkansas State University">
+      <meta property="og:url" content="https://www.astate.edu/admissions-and-aid/tuition-and-fees/estimate-your-costs.html">
+      <meta property="og:description" content="">
+      <meta property="og:site_name" content="Arkansas State University">
+      <meta property="og:type" content="website">
+      <meta property="og:updated_time" content="2025-11-21T14:53:46.621718949-08:00">
+      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:url" content="https://www.astate.edu/admissions-and-aid/tuition-and-fees/estimate-your-costs.html">
+      <meta name="twitter:title" content="Estimate Your Costs | Arkansas State University">
+      <meta name="twitter:description" content="">
+      <meta name="twitter:site" content="Arkansas State University">
+      <link href="https://www.astate.edu/ou-alerts/alerts-config.alerts.css?v=2.1-20260121091221" rel="stylesheet"></head>
+   <body><!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5VGR7265"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) --><header><a href="#main" class="skip-link visually-hidden">Skip to content</a><div class="o-header js-header">
+      <div class="o-header__main js-header-main">
+         <nav aria-label="Full"><button class="o-header__burger js-burger" type="button" aria-expanded="false" aria-controls="menu-panel" aria-label="Menu">
+               							Menu
+               							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="13" viewBox="0 0 20 13" fill="none">
+                  <path d="M1 12.5V10.5H19V12.5H1ZM1 7.5V5.5H19V7.5H1ZM1 2.5V0.5H19V2.5H1Z" fill="currentColor" stroke="currentColor" stroke-width="0.5"/></svg></button></nav><a href="/" class="o-header__main-logo"><img src="/_resources/assets/img/logo.png" alt="Arkansas State University logo"></a><form class="o-header__search js-header-search" action="/search.html">
+            <div class="o-header__search-trigger"><button class="js-header-search-trigger" type="button" aria-label="Open search"><span class="visually-hidden">Open search</span><svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 23 23" fill="none">
+                     <path d="M9.91644 17.8334C14.2886 17.8334 17.8329 14.2891 17.8329 9.91692C17.8329 5.5448 14.2886 2.00049 9.91644 2.00049C5.54431 2.00049 2 5.5448 2 9.91692C2 14.2891 5.54431 17.8334 9.91644 17.8334Z" stroke="currentColor" stroke-width="3"/>
+                     <path d="M20.9998 20.9998L15.5137 15.5137" stroke="currentColor" stroke-width="3"/></svg></button></div>
+            <div class="o-header__search-entry">
+               <div class="o-header__search-entry-value"><label for="search-1" class="visually-hidden">Search</label><input id="search-1" type="text" name="q" class="o-header__search-entry-input" placeholder="Search"><button class="o-header__search-entry-action" type="submit"><span class="visually-hidden">Submit</span><svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 23 23" fill="none">
+                        <path d="M9.91644 17.8334C14.2886 17.8334 17.8329 14.2891 17.8329 9.91692C17.8329 5.5448 14.2886 2.00049 9.91644 2.00049C5.54431 2.00049 2 5.5448 2 9.91692C2 14.2891 5.54431 17.8334 9.91644 17.8334Z" stroke="currentColor" stroke-width="3"/>
+                        <path d="M20.9998 20.9998L15.5137 15.5137" stroke="currentColor" stroke-width="3"/></svg></button></div><button class="o-header__search-entry-close js-header-search-close" type="button"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 16 17" fill="none">
+                     <path d="M2.4 15.5L1 14.1L6.6 8.5L1 2.9L2.4 1.5L8 7.1L13.6 1.5L15 2.9L9.4 8.5L15 14.1L13.6 15.5L8 9.9L2.4 15.5Z" fill="currentColor" stroke="currentColor"/></svg><span class="visually-hidden">Close Search</span></button></div>
+         </form>
+      </div>
+      <div id="menu-panel" class="o-header__dialog js-header-dialog" role="dialog" aria-label="Full Menu" style="display: none;">
+         <div class="o-header__dialog-control"><button class="o-header__burger js-burger" type="button" aria-expanded="false" aria-controls="menu-panel">
+               							Menu
+               							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 16 17" fill="none">
+                  <path d="M2.4 15.5L1 14.1L6.6 8.5L1 2.9L2.4 1.5L8 7.1L13.6 1.5L15 2.9L9.4 8.5L15 14.1L13.6 15.5L8 9.9L2.4 15.5Z" fill="currentColor" stroke="currentColor"/></svg></button><div class="o-header__search-trigger"><button class="js-dialog-search-trigger" type="button" aria-label="Open search"><span class="visually-hidden">Open search in dialog</span><svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 23 23" fill="none">
+                     <path d="M9.91644 17.8334C14.2886 17.8334 17.8329 14.2891 17.8329 9.91692C17.8329 5.5448 14.2886 2.00049 9.91644 2.00049C5.54431 2.00049 2 5.5448 2 9.91692C2 14.2891 5.54431 17.8334 9.91644 17.8334Z" stroke="currentColor" stroke-width="3"/>
+                     <path d="M20.9998 20.9998L15.5137 15.5137" stroke="currentColor" stroke-width="3"/></svg></button></div>
+         </div>
+         <div class="o-header__dialog-accordion" role="navigation" aria-label="Primary">
+            <ul class="main-menu__list">
+               <li class="main-menu__item"><a class="main-menu__link" href="/academics/">Academics</a><button type="button" class="main-submenu__opener top-lvl" id="btn-d29e18-1" aria-expanded="false"><span class="visually-hidden">toggle submenu</span></button><div class="submenu" aria-hidden="true">
+                     <ul class="submenu__list">
+                        <li class="submenu__item"><a class="submenu__link" href="/programs/">Explore All Programs</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/academics/undergraduate-academics/">Undergraduate Academics</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/academics/graduate-school/">Graduate Academics</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/academics/a-state-online/">A-State Online</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/academics/library/">Library</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/academics/early-college-programs/">Early College Programs</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/academics/classes-and-registration/">Classes &amp; Registration</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/colleges/">Colleges</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/academics/university-centers-locations.html">University Centers &amp; Locations</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/about/a-state-leadership/provosts-office/index.html">Office of the Provost</a></li>
+                     </ul>
+                  </div>
+               </li>
+               <li class="main-menu__item"><a class="main-menu__link" href="/admissions-and-aid/">Admissions &amp; Aid</a><button type="button" class="main-submenu__opener top-lvl" id="btn-d29e18-2" aria-expanded="false"><span class="visually-hidden">toggle submenu</span></button><div class="submenu" aria-hidden="true">
+                     <ul class="submenu__list">
+                        <li class="submenu__item"><a class="submenu__link" href="/admissions-and-aid/undergraduate-admissions/">Undergraduate Admissions</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/admissions-and-aid/graduate-admissions/">Graduate Admissions</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/admissions-and-aid/international-student-admission/">International Student Admissions</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/admissions-and-aid/tuition-and-fees/">Tuition &amp; Fees</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/admissions-and-aid/financial-aid-and-scholarships/">Financial Aid &amp; Scholarships</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/admissions-and-aid/visit-a-state/">Visit A-State</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/admissions-and-aid/undergraduate-admissions/new-student-orientation.html">New Student Orientation</a></li>
+                     </ul>
+                  </div>
+               </li>
+               <li class="main-menu__item"><a class="main-menu__link" href="/student-life/">Student Life</a><button type="button" class="main-submenu__opener top-lvl" id="btn-d29e18-3" aria-expanded="false"><span class="visually-hidden">toggle submenu</span></button><div class="submenu" aria-hidden="true">
+                     <ul class="submenu__list">
+                        <li class="submenu__item"><a class="submenu__link" href="/student-life/activities-and-leadership/">Activities &amp; Leadership</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/student-life/sports-and-athletics/">Sports &amp; Athletics</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/student-life/housing/">Housing</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="https://astate.sodexomyway.com/en-us/" target="_blank" rel="noopener">Dining Services</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/student-life/student-support/">Student Support</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="https://calendar.astate.edu/" target="_blank" rel="noopener">Events Calendar</a></li>
+                     </ul>
+                  </div>
+               </li>
+               <li class="main-menu__item"><a class="main-menu__link" href="/research/">Research</a><button type="button" class="main-submenu__opener top-lvl" id="btn-d29e18-4" aria-expanded="false"><span class="visually-hidden">toggle submenu</span></button><div class="submenu" aria-hidden="true">
+                     <ul class="submenu__list">
+                        <li class="submenu__item"><a class="submenu__link" href="/research/arkansas-biosciences-institute/">Arkansas Biosciences Institute</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/research/institute-for-rural-initiatives.html">Institute for Rural Initiatives</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/research/research-opportunities/">Research Opportunities</a></li>
+                     </ul>
+                  </div>
+               </li>
+               <li class="main-menu__item"><a class="main-menu__link" href="/outreach/">Outreach</a><button type="button" class="main-submenu__opener top-lvl" id="btn-d29e18-5" aria-expanded="false"><span class="visually-hidden">toggle submenu</span></button><div class="submenu" aria-hidden="true">
+                     <ul class="submenu__list">
+                        <li class="submenu__item"><a class="submenu__link" href="/outreach/childhood-services/">Childhood Services</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/outreach/coursera/index.html">Coursera Career Academy</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/outreach/beck-center-for-veterans/">Beck Center for Veterans</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/outreach/history-and-heritage/">History &amp; Heritage</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/outreach/ed2go/index.html">Ed2Go</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/outreach/events-and-venues/">Events &amp; Venues</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/outreach/fowler-center/index.html">Fowler Center</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/outreach/restore-hub/">RESTORE Hub</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/outreach/workforce-and-economic-development/">Workforce &amp; Economic Development</a></li>
+                     </ul>
+                  </div>
+               </li>
+               <li class="main-menu__item"><a class="main-menu__link" href="/about/">About</a><button type="button" class="main-submenu__opener top-lvl" id="btn-d29e18-6" aria-expanded="false"><span class="visually-hidden">toggle submenu</span></button><div class="submenu" aria-hidden="true">
+                     <ul class="submenu__list">
+                        <li class="submenu__item"><a class="submenu__link" href="/about/history/index.html">The A-State Story</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/about/living-in-jonesboro.html">Living in Jonesboro</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/about/a-state-leadership/">Our Leadership</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/about/accreditations/">Accreditations</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/about/institutional-research/">Campus Data &amp; Institutional Research</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/about/news/">University News</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/about/faculty-and-staff-directory/">Faculty &amp; Staff Directory</a></li>
+                        <li class="submenu__item"><a class="submenu__link" href="/about/campus-offices/">Campus Offices</a></li>
+                     </ul>
+                  </div>
+               </li>
+            </ul>
+         </div>
+         <nav aria-label="secondary" class="o-header__dialog-nav-secondary">
+            <div class="o-header__dialog-nav-secondary-collapse js-menu-collapse">
+               <div class="o-header__dialog-nav-secondary-collapse-action"><button type="button" class="js-menu-collapse-trigger" aria-expanded="false"><span>Colleges</span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="9" viewBox="0 0 12 9" fill="none">
+                        <path d="M12 6.7998L6 0.799805L0 6.7998L1.4 8.1998L6 3.5998L10.6 8.1998L12 6.7998Z" fill="currentColor"/></svg></button></div>
+               <ul>
+                  <li><a href="/colleges/agriculture/">Agriculture</a></li>
+                  <li><a href="/colleges/neil-griffin-college-of-business/">Neil Griffin College of Business</a></li>
+                  <li><a href="/colleges/education-and-behavioral-science/">Education &amp; Behavioral Science</a></li>
+                  <li><a href="/colleges/engineering-and-computer-science/">Engineering &amp; Computer Science</a></li>
+                  <li><a href="/colleges/liberal-arts-and-communication/">Liberal Arts &amp; Communication</a></li>
+                  <li><a href="/colleges/nursing-and-health-professions/">Nursing &amp; Health Professions</a></li>
+                  <li><a href="/colleges/beck-college-of-sciences-and-mathematics/">Beck College of Sciences &amp; Mathematics</a></li>
+                  <li><a href="/colleges/university-college/">University College</a></li>
+                  <li><a href="/academics/graduate-school/">Graduate School</a></li>
+                  <li><a href="/colleges/veterinary-medicine/">Veterinary Medicine</a></li>
+               </ul>
+            </div>
+            <div class="o-header__dialog-nav-secondary-collapse js-menu-collapse">
+               <div class="o-header__dialog-nav-secondary-collapse-action"><button type="button" class="js-menu-collapse-trigger" aria-expanded="false"><span>Quick Links</span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="9" viewBox="0 0 12 9" fill="none">
+                        <path d="M12 6.7998L6 0.799805L0 6.7998L1.4 8.1998L6 3.5998L10.6 8.1998L12 6.7998Z" fill="currentColor"/></svg></button></div>
+               <ul>
+                  <li><a href="https://arkansasstateuniversity.instructure.com/" target="_blank" rel="noopener">Canvas</a></li>
+                  <li><a href="https://pack.astate.edu/" target="_blank" rel="noopener">Pack Portal</a></li>
+                  <li><a href="https://outlook.office365.com/mail/" target="_blank" rel="noopener">Campus Email</a></li>
+                  <li><a href="https://kb.astate.edu" target="_blank" rel="noopener">A-State Knowledge Base</a></li>
+                  <li><a href="https://astate.simplesyllabus.com/" target="_blank" rel="noopener">Syllabi</a></li>
+                  <li><a href="https://kb.astate.edu/books/academic-calendars" target="_blank" rel="noopener">Academic Calendars</a></li>
+                  <li><a href="https://calendar.astate.edu/" target="_blank" rel="noopener">Event Calendar</a></li>
+                  <li><a href="/about/campus-offices/index.html">Campus Offices</a></li>
+               </ul>
+            </div><a class="o-header__dialog-nav-secondary-link" href="https://astateredwolves.com/" target="_blank" rel="noopener">Red Wolves NCAA Athletics</a><a class="o-header__dialog-nav-secondary-link" href="/give/index.html">Giving to A-State</a></nav>
+         <div class="o-header__dialog-info">
+            <h2 class="o-header__dialog-info-title">Information For</h2>
+            <nav class="o-header__dialog-info-nav" aria-label="Information for"><a class="o-header__dialog-info-nav-link" href="/information-for/recently-admitted-students/index.html">Recently Admitted Students</a><a class="o-header__dialog-info-nav-link" href="/admissions-and-aid/undergraduate-admissions/transferring-to-a-state.html">Transfer Students</a><a class="o-header__dialog-info-nav-link" href="/information-for/current-students/">Current Students</a><a class="o-header__dialog-info-nav-link" href="/information-for/faculty-and-staff/">Faculty &amp; Staff</a><a class="o-header__dialog-info-nav-link" href="/information-for/high-school-counselors-and-parents.html">High School Counselors &amp; Parents</a><a class="o-header__dialog-info-nav-link" href="/information-for/alumni/">Alumni</a><a class="o-header__dialog-info-nav-link" href="/admissions-and-aid/international-student-admission/index.html">International Students</a></nav>
+         </div>
+      </div>
+   </div>
+</header>      <main id="main" class="main" tabindex="-1">
+         <div class="hero-section">
+            <div class="container">
+               <h1>Estimate Your Costs</h1>
+            </div>
+         </div>
+         <div class="container">
+            <div class="o-secondary-nav-breadcrumbs">
+               <div class="c-dropdown" role="navigation" aria-label="Section"><button class="c-dropdown__trigger js-dropdown-trigger" type="button" id="dropdownMenuButton1" aria-haspopup="true" aria-expanded="false" aria-controls="dropdownMenu"><span><span>Section Menu</span><span class="c-dropdown__trigger-icon"><span class="c-dropdown__trigger-icon--close"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 16 17" fill="none">
+                                 <path d="M2.4 15.5L1 14.1L6.6 8.5L1 2.9L2.4 1.5L8 7.1L13.6 1.5L15 2.9L9.4 8.5L15 14.1L13.6 15.5L8 9.9L2.4 15.5Z" fill="currentColor" stroke="currentColor"/></svg></span><span class="c-dropdown__trigger-icon--burger"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="13" viewBox="0 0 20 13" fill="none">
+                                 <path d="M1 12.5V10.5H19V12.5H1ZM1 7.5V5.5H19V7.5H1ZM1 2.5V0.5H19V2.5H1Z" fill="currentColor" stroke="currentColor" stroke-width="0.5"/></svg></span></span></span></button><div class="c-dropdown__inner" id="dropdownMenu" aria-labelledby="dropdownMenuButton1">
+                     <div class="c-section-menu"><a class="c-section-menu__back" href="/admissions-and-aid/tuition-and-fees/"><span aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="8" height="13" viewBox="0 0 8 13" fill="none">
+                                 <path d="M6 12.5L0 6.5L6 0.5L7.4 1.9L2.8 6.5L7.4 11.1L6 12.5Z" fill="currentColor"/></svg></span>Tuition and Fees</a><strong class="c-section-menu__title" aria-current="true">Estimate Your Costs</strong>
+                        <ul class='c-section-menu__list'><li class='c-section-menu__list-item js-dropdown-item'><a href="/admissions-and-aid/tuition-and-fees/undergraduate-students.html">Undergraduate Students</a></li><li class='c-section-menu__list-item js-dropdown-item'><a href="/admissions-and-aid/tuition-and-fees/international-students.html">International Students</a></li><li class='c-section-menu__list-item js-dropdown-item'><a href="/admissions-and-aid/tuition-and-fees/graduate-students.html">Graduate Students</a></li></ul></div>
+                  </div>
+               </div>
+               <nav aria-label="breadcrumb" class="c-breadcrumbs">
+                  <ol class="c-breadcrumbs__list">
+                     <li class="c-breadcrumbs__list-item"><a href="/index.html">Home</a></li>
+                     <li class="c-breadcrumbs__list-item"><a href="/admissions-and-aid/index.html">Admissions &amp; Aid</a></li>
+                     <li class="c-breadcrumbs__list-item"><a href="/admissions-and-aid/tuition-and-fees/index.html">Tuition and Fees</a></li>
+                     <li class="c-breadcrumbs__list-item" aria-current="page">Estimate Your Costs</li>
+                  </ol>
+               </nav>
+            </div>
+            <div class="page-intro">These tools look at things like your grades, income, and possible financial aid to
+               give you a cost estimate after scholarships and aid are applied.</div>
+            <h2><a id="cost-of-attendance"></a>Cost of Attendance</h2>
+            
+            <h3><span style="color: #000000;">2025-2026 Academic Year</span></h3>
+            
+            <h6><span style="color: #000000;">Dependent Students (In-State Tuition Rate)</span></h6>
+            
+            <p><span style="color: #000000;">The figures below represent fall and spring terms full-time enrollment based upon
+                  15 credit hours.</span></p>
+            
+            <table>
+               
+               <thead>
+                  
+                  <tr style="background-color: #ced4d9;">
+                     
+                     <td style="border-image: initial;"><span style="color: #000000;"><span style="font-size: 18px;">&nbsp;</span></span></td>
+                     
+                     <td><strong><span style="color: #000000;"><span style="font-size: 18px;">Residence Hall</span></span></strong></td>
+                     
+                     <td><strong><span style="color: #000000;"><span style="font-size: 18px;">Off Campus</span></span></strong></td>
+                     
+                     <td><strong><span style="color: #000000;"><span style="font-size: 18px;">With Parent</span></span></strong></td>
+                     
+                     <td><strong><span style="color: #000000;"><span style="font-size: 18px;">Graduate*</span></span></strong></td>
+                     </tr>
+                  </thead>
+               
+               <tbody>
+                  
+                  <tr>
+                     
+                     <td style="background-color: #ced4d9;"><strong><span style="color: #000000;"><span style="font-size: 18px;">Tuition &amp; Fees</span></span></strong></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">10,430</span></span></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">10,430</span></span></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;"><span>10,430</span></span></span></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">7,556</span></span></td>
+                     </tr>
+                  
+                  <tr>
+                     
+                     <td style="background-color: #ced4d9;"><strong><span style="color: #000000;"><span style="font-size: 18px;">Books</span></span></strong></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">1,250</span></span></td>
+                     
+                     <td>
+                        
+                        <p><span style="color: #000000;"><span> 1,250</span><span></span></span></p>
+                        </td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">1,250</span></span></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">1,250</span></span></td>
+                     </tr>
+                  
+                  <tr>
+                     
+                     <td style="background-color: #ced4d9;"><strong><span style="color: #000000;"><span style="font-size: 18px;">Room &amp; Board</span></span></strong></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">11,950</span></span></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">11,925</span></span></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;"><span>2,720</span></span></span></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">13,190</span></span></td>
+                     </tr>
+                  
+                  <tr>
+                     
+                     <td style="background-color: #ced4d9;"><strong><span style="color: #000000;"><span style="font-size: 18px;">Personal</span></span></strong></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">2,790</span></span></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">2,790</span></span></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">2,790</span></span></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">2,790</span></span></td>
+                     </tr>
+                  
+                  <tr>
+                     
+                     <td style="background-color: #ced4d9;"><strong><span style="color: #000000;"><span style="font-size: 18px;">Transportation</span></span></strong></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">3,570</span></span></td>
+                     
+                     <td>
+                        
+                        <p><span>5,406</span><span></span></p>
+                        </td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">5,406</span></span></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">3,570</span></span></td>
+                     </tr>
+                  
+                  <tr>
+                     
+                     <td style="background-color: #ced4d9;"><strong><span style="color: #000000;"><span style="font-size: 18px;">Total</span></span></strong></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">29,990</span></span></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">31,801</span></span></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">22,596</span></span></td>
+                     
+                     <td><span style="color: #000000;"><span style="font-size: 18px;">28,356</span></span></td>
+                     </tr>
+                  </tbody>
+               </table>
+            
+            <p><span style="color: #000000;"><br><strong>Undergraduate Non-Residents</strong> Add: $8,310<br><strong>Graduate Non-Residents</strong> Add: $5,922</span></p>
+            
+            <p><span style="color: #000000;">*Graduate tuition and fees are based upon 9 credit hours and On-Campus.</span></p>
+            
+            <p><span style="color: #000000;"><strong>Note:</strong> This is an estimated cost of attendance for a Fall/Spring semester.</span><span style="color: #000000;"></span></p>
+            
+            <hr>
+            
+            <section class="section multi-column-container gen2col">
+               <div class="column column--two">
+                  <div class="column__col">
+                     
+                     <div class="column__img"><img id="net-price-calculator" class="" alt="A-State student walking on campus with Red Wolves shirt" src="/images/astate-student-walking-red-wolves-hoodie-722.webp"></div>
+                     <div class="column__title">
+                        <h3>Net Price Calculator</h3>
+                     </div>
+                     <div class="column__body">
+                        
+                        <p>High school seniors planning for college can use this calculator to get a ballpark
+                           estimate of what it may cost to attend Arkansas State University. It’s intended for
+                           first-year, full-time students and requires basic info like your high-school grades
+                           and household income. Just keep in mind that the results are only an estimate; they’re
+                           not a final financial aid offer, and actual eligibility will be determined through
+                           the official aid process.<br><br><a class="cta cta--button" href="https://npc.collegeboard.org/student/app/astate" target="_blank" rel="noopener">GO TO THE NET PRICE CALCULATOR </a></p>
+                        </div>
+                     
+                     <p>&nbsp;</p>
+                     </div>
+                  <div class="column__col">
+                     
+                     <div class="column__img"><img id="tuition-estimator" class="" alt="Students laughing at outdoor table" src="/images/astate-students-laughing-table-722.webp"></div>
+                     <div class="column__title">
+                        <h3>Tuition Estimator</h3>
+                     </div>
+                     <div class="column__body">
+                        
+                        <p>Please note this estimator is for estimates only and the actual charges may vary by
+                           your program or courses. The new tuition and fee rates are approved by the Board of
+                           Trustees in the spring each year so the estimate may not reflect the new rates for
+                           a future term.</p>
+                        <script type="module" src="/_resources/js/tuition-estimator/frontend.a518d274.js"></script>
+                        
+                        <link rel="modulepreload" href="/_resources/js/tuition-estimator/baseorderby.0d2d5b46.js">
+                        
+                        <link rel="stylesheet" href="/_resources/js/tuition-estimator/frontend.a60500e6.css">
+                        
+                        <style>
+    #app table td, #app table th {
+        min-width: 0;
+        word-break: normal;
+    }
+    .gap-y-6[data-v-ec4a1a87] {
+        row-gap: 2.5rem;
+    }
+
+    #app {
+        margin: 3rem 0;
+        font-size: 1.5rem;
+        line-height: 2rem;
+    }
+
+    .py-3[data-v-072c4d92] {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    .px-3[data-v-072c4d92] {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .text-xl[data-v-072c4d92] {
+        font-size: 2.25rem;
+        line-height: 2.75rem;
+    }
+
+    .w-28[data-v-ec4a1a87] {
+        width: 14rem;
+    }
+
+    .text-base[data-v-ec4a1a87] {
+        font-size: 1.7rem;
+        line-height: 2.4rem;
+    }
+    
+    [type="text"][data-v-ec4a1a87], [type="email"][data-v-ec4a1a87], [type="url"][data-v-ec4a1a87], [type="password"][data-v-ec4a1a87], [type="number"][data-v-ec4a1a87], [type="date"][data-v-ec4a1a87], [type="datetime-local"][data-v-ec4a1a87], [type="month"][data-v-ec4a1a87], [type="search"][data-v-ec4a1a87], [type="tel"][data-v-ec4a1a87], [type="time"][data-v-ec4a1a87], [type="week"][data-v-ec4a1a87], [multiple][data-v-ec4a1a87], textarea[data-v-ec4a1a87], select[data-v-ec4a1a87] {
+        font-size: 2rem;
+        line-height: 2.5rem;
+    }
+    .w-1\/6[data-v-072c4d92] {
+        width: auto;
+    }
+
+    @media (min-width: 640px) {
+        .sm\:px-6[data-v-072c4d92] {
+            padding-left: 2rem;
+            padding-right: 2rem;
+        }
+
+        .sm\:text-sm[data-v-ec4a1a87] {
+            font-size: 2rem;
+            line-height: 2.5rem;
+        }
+
+        .gap-2[data-v-ec4a1a87] {
+            gap: 2rem;
+        }
+    }
+</style>
+                        
+                        <div id="app"></div>
+                        <script>
+    var sourceURL = "/_resources/js/tuition-estimator/tuition-and-fees-snapshot.json";
+</script>
+                        </div>
+                     </div>
+               </div>
+            </section>
+            
+            <p>&nbsp;</p>
+         </div>
+      </main>
+      <footer class="o-footer"><div class="o-footer__sock">
+   <div class="l-container">
+      <div class="o-footer__sock-inner">
+         <h2 class="o-footer__sock-title">Find your place here.</h2>
+         <div class="o-footer__sock-actions"><a class="cta cta--button" href="/programs/index.html">Programs</a><a class="cta cta--button" href="/admissions-and-aid/visit-a-state/index.html">Visit</a><a class="cta cta--button" href="/admissions-and-aid/apply-now.html">Apply</a></div>
+      </div>
+   </div>
+</div><div class="o-footer__inner">
+   <div class="l-container">
+      <div class="o-footer__grid">
+         <div class="o-footer__grid__top">
+            <div class="o-footer__logo"><a href="/"><img src="/_resources/assets/img/logo-text.png" alt="Arkansas State University logo"></a></div>
+            <div class="o-footer__social-wrapper">
+               <ul class="o-footer__social u-reset-list">
+                  <li class="o-footer__social-item"><a href="https://www.facebook.com/ArkansasState" class="o-footer__social-item-link" title="Facebook"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="41" viewBox="0 0 40 41" fill="none">
+                           <path d="M24.4937 22.0618L25.0636 18.4439H21.5529V16.0923C21.5529 15.1031 22.043 14.1364 23.6103 14.1364H25.2289V11.0556C24.2863 10.9054 23.3339 10.8242 22.3793 10.8125C19.4898 10.8125 17.6033 12.5479 17.6033 15.6853V18.4439H14.4004V22.0618H17.6033V30.8125H21.5529V22.0618H24.4937Z" fill="currentColor"/></svg></a></li>
+                  <li class="o-footer__social-item"><a href="https://www.x.com/ArkansasState" class="o-footer__social-item-link" title="X"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="41" viewBox="0 0 40 41" fill="none">
+                           <path d="M21.9047 19.2821L29.3513 10.8125H27.5873L21.1187 18.165L15.956 10.8125H10L17.8087 21.9319L10 30.8125H11.764L18.5907 23.0463L24.044 30.8125H30M12.4007 12.1141H15.1107L27.586 29.5749H24.8753" fill="currentColor"/></svg></a></li>
+                  <li class="o-footer__social-item"><a href="https://www.instagram.com/ArkansasState/" class="o-footer__social-item-link" title="Instagram"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="41" viewBox="0 0 40 41" fill="none">
+                           <path d="M16.4852 20.9333C16.4852 18.9228 18.1156 17.2925 20.1274 17.2925C22.1391 17.2925 23.7704 18.9228 23.7704 20.9333C23.7704 22.9438 22.1391 24.5741 20.1274 24.5741C18.1156 24.5741 16.4852 22.9438 16.4852 20.9333ZM14.5159 20.9333C14.5159 24.0307 17.0281 26.5414 20.1274 26.5414C23.2266 26.5414 25.7388 24.0307 25.7388 20.9333C25.7388 17.8359 23.2266 15.3252 20.1274 15.3252C17.0281 15.3252 14.5159 17.8359 14.5159 20.9333ZM24.6496 15.1028C24.6495 15.362 24.7263 15.6155 24.8703 15.831C25.0143 16.0466 25.2191 16.2147 25.4586 16.314C25.6982 16.4133 25.9619 16.4393 26.2163 16.3889C26.4707 16.3384 26.7044 16.2137 26.8879 16.0305C27.0714 15.8472 27.1963 15.6138 27.247 15.3596C27.2977 15.1053 27.2719 14.8418 27.1727 14.6023C27.0736 14.3628 26.9056 14.158 26.69 14.0139C26.4744 13.8698 26.2209 13.7929 25.9615 13.7928H25.961C25.6133 13.7929 25.2799 13.931 25.0341 14.1766C24.7882 14.4223 24.6499 14.7554 24.6496 15.1028ZM15.7124 29.8232C14.6469 29.7747 14.0678 29.5974 13.683 29.4475C13.1728 29.249 12.8087 29.0126 12.426 28.6306C12.0432 28.2486 11.8063 27.8851 11.6086 27.3752C11.4585 26.9908 11.2811 26.4118 11.2326 25.347C11.1797 24.1958 11.1691 23.85 11.1691 20.9334C11.1691 18.0168 11.1805 17.6719 11.2326 16.5198C11.2812 15.4549 11.4599 14.8772 11.6086 14.4916C11.8072 13.9817 12.0438 13.6179 12.426 13.2353C12.8082 12.8528 13.1719 12.616 13.683 12.4184C14.0677 12.2685 14.6469 12.0911 15.7124 12.0427C16.8643 11.9897 17.2103 11.9792 20.1274 11.9792C23.0444 11.9792 23.3908 11.9906 24.5436 12.0427C25.6091 12.0912 26.1872 12.2699 26.573 12.4184C27.0832 12.616 27.4473 12.8533 27.83 13.2353C28.2128 13.6173 28.4488 13.9817 28.6475 14.4916C28.7975 14.876 28.975 15.4549 29.0234 16.5198C29.0764 17.6719 29.0869 18.0168 29.0869 20.9334C29.0869 23.85 29.0764 24.1948 29.0234 25.347C28.9749 26.4118 28.7965 26.9906 28.6475 27.3752C28.4488 27.8851 28.2123 28.2489 27.83 28.6306C27.4478 29.0122 27.0832 29.249 26.573 29.4475C26.1884 29.5974 25.6091 29.7748 24.5436 29.8232C23.3917 29.8762 23.0457 29.8867 20.1274 29.8867C17.209 29.8867 16.864 29.8762 15.7124 29.8232ZM15.6219 10.0779C14.4585 10.1308 13.6636 10.3152 12.9693 10.5851C12.2504 10.864 11.6417 11.238 11.0335 11.8449C10.4253 12.4518 10.052 13.061 9.77299 13.7796C9.50285 14.4738 9.31838 15.2679 9.2654 16.4306C9.21155 17.5951 9.19922 17.9674 9.19922 20.9333C9.19922 23.8993 9.21155 24.2716 9.2654 25.4361C9.31838 26.5988 9.50285 27.3928 9.77299 28.087C10.052 28.8051 10.4254 29.4151 11.0335 30.0217C11.6416 30.6283 12.2504 31.0019 12.9693 31.2815C13.6649 31.5514 14.4585 31.7358 15.6219 31.7887C16.7877 31.8417 17.1596 31.8549 20.1274 31.8549C23.0951 31.8549 23.4676 31.8426 24.6328 31.7887C25.7963 31.7358 26.5907 31.5514 27.2854 31.2815C28.0039 31.0019 28.613 30.6286 29.2212 30.0217C29.8294 29.4148 30.202 28.8051 30.4817 28.087C30.7519 27.3928 30.9372 26.5987 30.9893 25.4361C31.0423 24.2707 31.0546 23.8993 31.0546 20.9333C31.0546 17.9674 31.0423 17.5951 30.9893 16.4306C30.9363 15.2678 30.7519 14.4734 30.4817 13.7796C30.202 13.0615 29.8285 12.4527 29.2212 11.8449C28.614 11.237 28.0039 10.864 27.2862 10.5851C26.5907 10.3152 25.7962 10.1299 24.6337 10.0779C23.4685 10.0249 23.096 10.0117 20.1282 10.0117C17.1605 10.0117 16.7877 10.024 15.6219 10.0779Z" fill="currentColor"/></svg></a></li>
+                  <li class="o-footer__social-item"><a href="https://www.youtube.com/ArkansasState" class="o-footer__social-item-link" title="Youtube"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="41" viewBox="0 0 40 41" fill="none">
+                           <path fill-rule="evenodd" clip-rule="evenodd" d="M28.7095 13.2879C29.6925 13.5533 30.4651 14.3279 30.7262 15.3097C31.2014 17.0915 31.2014 20.8115 31.2014 20.8115C31.2014 20.8115 31.2014 24.5315 30.7262 26.3133C30.4614 27.2988 29.6889 28.0733 28.7095 28.3352C26.9323 28.8115 19.8014 28.8115 19.8014 28.8115C19.8014 28.8115 12.6741 28.8115 10.8932 28.3352C9.91024 28.0697 9.13767 27.2952 8.87652 26.3133C8.40137 24.5315 8.40137 20.8115 8.40137 20.8115C8.40137 20.8115 8.40137 17.0915 8.87652 15.3097C9.1413 14.3243 9.91387 13.5497 10.8932 13.2879C12.6741 12.8115 19.8014 12.8115 19.8014 12.8115C19.8014 12.8115 26.9323 12.8115 28.7095 13.2879ZM23.4466 20.8115L17.5235 24.2406V17.3824L23.4466 20.8115Z" fill="currentColor"/></svg></a></li>
+                  <li class="o-footer__social-item"><a href="https://vimeo.com/ArkansasState" class="o-footer__social-item-link" title="Vimeo"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="41" viewBox="0 0 40 41" fill="none">
+                           <path d="M31.2403 16.6267C31.1408 18.6853 29.6195 21.5043 26.6773 25.0821C23.6353 28.8194 21.0616 30.6879 18.9562 30.6879C17.6524 30.6879 16.5482 29.5502 15.647 27.2739C15.0447 25.1874 14.443 23.1011 13.8409 21.0146C13.1713 18.7396 12.4533 17.6006 11.6856 17.6006C11.5182 17.6006 10.9325 17.9335 9.92967 18.5967L8.87695 17.3148C9.98113 16.3977 11.0705 15.4807 12.1423 14.5625C13.6149 13.3596 14.7205 12.727 15.4573 12.663C17.1986 12.5049 18.2704 13.63 18.6727 16.0384C19.1074 18.6368 19.4081 20.253 19.5773 20.8856C20.0791 23.0414 20.6313 24.1179 21.2348 24.1179C21.7031 24.1179 22.4065 23.4188 23.3444 22.0206C24.2815 20.622 24.7833 19.5579 24.8511 18.827C24.9845 17.62 24.4824 17.0151 23.3444 17.0151C22.8088 17.0151 22.2566 17.1316 21.6885 17.3619C22.788 13.9574 24.8889 12.304 27.99 12.3984C30.289 12.4621 31.3728 13.8715 31.2403 16.6267Z" fill="currentColor"/></svg></a></li>
+               </ul>
+            </div>
+         </div>
+         <div class="o-footer__grid__bottom">
+            <section class="o-footer__contacts">
+               <h2 class="o-footer__title">Contact</h2>
+               <address class="o-footer__contacts-address">Jonesboro, Arkansas</address><a href="tel:870-972-2100" class="o-footer__contacts-tel"><span class="o-footer__contacts-tel-icon"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M2.41333 5.19333C3.37333 7.08 4.92 8.62667 6.80667 9.58667L8.27333 8.12C8.46 7.93333 8.72 7.88 8.95333 7.95333C9.7 8.2 10.5 8.33333 11.3333 8.33333C11.5101 8.33333 11.6797 8.40357 11.8047 8.5286C11.9298 8.65362 12 8.82319 12 9V11.3333C12 11.5101 11.9298 11.6797 11.8047 11.8047C11.6797 11.9298 11.5101 12 11.3333 12C8.32755 12 5.44487 10.806 3.31946 8.68054C1.19404 6.55513 0 3.67245 0 0.666667C0 0.489856 0.0702379 0.320286 0.195262 0.195262C0.320286 0.0702379 0.489856 0 0.666667 0H3C3.17681 0 3.34638 0.0702379 3.4714 0.195262C3.59643 0.320286 3.66667 0.489856 3.66667 0.666667C3.66667 1.5 3.8 2.3 4.04667 3.04667C4.12 3.28 4.06667 3.54 3.88 3.72667L2.41333 5.19333Z" fill="currentColor"/></svg></span>
+                  									(870) 972-2100
+                  								</a></section>
+            <section class="o-footer__nav">
+               <h2 class="o-footer__title">Quick Links</h2>
+               <div class="o-footer__nav-inner"><a class="o-footer__nav-inner-link" href="/about/campus-offices/parking/index.html">Maps &amp; Directions</a><a class="o-footer__nav-inner-link" href="/jobs/index.html">Employment</a><a class="o-footer__nav-inner-link" href="/accessibility.html">Accessibility</a><a class="o-footer__nav-inner-link" href="https://kb.astate.edu/books/it-policies-procedures">Appropriate Use</a><a class="o-footer__nav-inner-link" href="https://asusystem.edu/offices/finance/fiscal-accountability-transparency/">Fiscal Transparency</a><a class="o-footer__nav-inner-link" href="https://apps.astate.edu/expenditures">Open Records</a><a class="o-footer__nav-inner-link" href="/footer-links/privacy.html">Privacy</a><a class="o-footer__nav-inner-link" href="/about/campus-offices/office-of-title-ix/title-ix.html">Title IX</a><a class="o-footer__nav-inner-link" href="/about/campus-offices/information-technology-services/index.html">Helpdesk</a><a class="o-footer__nav-inner-link" href="/report.html">File a Report</a><a class="o-footer__nav-inner-link" href="/about/consumer-information/index.html">Consumer Information</a><a class="o-footer__nav-inner-link" href="https://www.asusystem.edu/">ASU System</a></div>
+            </section>
+         </div>
+      </div>
+   </div>
+</div><div class="o-footer__copyright">
+   <div class="l-container"><span id="directedit"><a href="#">©</a></span> Copyright 2026 Arkansas State University</div>
+</div></footer>
+      <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script> <!-- needed for twitter -->
+<script src="/_resources/js/_compiled/main-min.js?v=2"></script>
+<script src="https://bot.ivy.ai/bot/script/category/kvynxAVjpJaOW2M207l375weRYoDm68z" referrerpolicy="no-referrer-when-downgrade" async></script>      <div id="ou-hidden" style="display:none;"><a id="de" rel="nofollow" href="https://a.cms.omniupdate.com/11/?skin=oucampus&amp;account=arkansas_state&amp;site=www&amp;action=de&amp;path=/admissions-and-aid/tuition-and-fees/estimate-your-costs.pcf">©</a></div><script>
+			if(document.getElementById("de") != null && document.getElementById("directedit")) {
+				var link = document.getElementById("de").parentNode.innerHTML;
+				document.getElementById("de").parentNode.innerHTML = "";
+				document.getElementById("directedit").innerHTML = link.replace(/^\s+|\s+$/gm,'');
+			}
+		</script>
+      <script src="https://www.astate.edu/ou-alerts/alerts-config.alerts.js?v=2.1-20260121091220"></script>
+<script>
+	// archive alert processing
+	if (document.getElementById(ouEmergencyAlerts.archivedAlertDivId)) {
+		ouEmergencyAlerts.loadAlertFeed("processAlertFeedForArchivePage", "activeAlertFeed", "archiveActiveAlertHeading");  
+		setTimeout(function() {
+			ouEmergencyAlerts.loadAlertFeed("processAlertFeedForArchivePage", "archiveAlertFeed", "archiveAlertHeading");
+		}, 200);
+	}
+	// active alert processing
+	ouEmergencyAlerts.determineActiveAlertOutput();
+</script><script type="text/template" id="oualerts-active-announcement">
+<div id="oualerts-active-alert-display" class="oualerts-notify oualerts-notify-announcement oualerts-top oualerts-top-fixed ouAlertsFadeInDown oualerts-animated-fast" role="alert">
+	<div class="oualerts-notify-body">
+		{% if (o.showDate) { %}
+		<div class="oualerts-notify-date">{%=ouEmergencyAlerts.alertDateFormat("F d, Y h:i A",o.pubDate)%}</div>
+		{% } %}
+		<h3 class="oualerts-notify-title">
+			
+						<svg class="oualerts-notify-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 271 286"><path fill-rule="evenodd" d="M241.964 157.267v69.997c0 5.11-5.639 8.199-9.934 5.442l-86.454-55.51h-13.388l11.06 28.862c18.297 3.828 32.042 20.078 32.042 39.544 0 22.311-18.056 40.398-40.328 40.398-17.471 0-32.347-11.13-37.949-26.698l-.0122.005-31.4593-82.111h-5.3193C26.9624 177.196 0 150.187 0 116.869c0-33.3175 26.9624-60.3268 60.2222-60.3268h85.3538L232.03 1.0324c4.295-2.7574 9.934.3319 9.934 5.4417v69.9975h18.282c5.939 0 10.754 4.8231 10.754 10.7727v59.2497c0 5.95-4.815 10.773-10.754 10.773h-18.282zm-15.055 54.237l-75.278-48.334V70.5682l75.278-48.3337V211.504zm15.055-69.319h13.98V91.5533h-13.98v50.6317z" clip-rule="evenodd"/></svg>
+					
+			{%=o.title%}
+		</h3>
+		{% if (o.subtitle) { %}
+		<p class="oualerts-notify-subtitle"><strong>{%=o.subtitle %}</strong></p>
+		{% } %}
+		{% if (o.description) { %}
+		<p class="oualerts-notify-msg">{%=o.description %}
+			{% } %}
+			{% if (o.guid) { %}
+			<br>
+			<a href="{%=o.guid %}" class="oualerts-notify-link">Read More...</a>
+			{% } %}
+			{% if (o.description) { %}
+		</p>
+		{% } %}
+		<p class="oualerts-notify-footer">
+			<button class="oualerts-close-button" id="oualerts-close-button">Close</button>
+		</p>
+	</div>
+</div>
+
+</script>
+<script type="text/template" id="oualerts-active-warning">
+<div id="oualerts-active-alert-display" class="oualerts-notify oualerts-notify-warning oualerts-top oualerts-top-fixed ouAlertsFadeInDown oualerts-animated-fast" role="alert">
+	<div class="oualerts-notify-body">
+		{% if (o.showDate) { %}
+		<div class="oualerts-notify-date">{%=ouEmergencyAlerts.alertDateFormat("F d, Y h:i A",o.pubDate)%}</div>
+		{% } %}
+		<h3 class="oualerts-notify-title">
+			
+						<svg class="oualerts-notify-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 273 273"><path fill-rule="evenodd" d="M273 136.5c0 75.387-61.113 136.5-136.5 136.5C61.1131 273 0 211.887 0 136.5 0 61.1131 61.1131 0 136.5 0 211.887 0 273 61.1131 273 136.5zM123 58v105h27V58h-27zm0 157v-26.5h27V215h-27z" clip-rule="evenodd"/></svg>
+					
+			{%=o.title%}
+		</h3>
+		{% if (o.subtitle) { %}
+		<p class="oualerts-notify-subtitle"><strong>{%=o.subtitle %}</strong></p>
+		{% } %}
+		{% if (o.description) { %}
+		<p class="oualerts-notify-msg">{%=o.description %}
+			{% } %}
+			{% if (o.guid) { %}
+			<br>
+			<a href="{%=o.guid %}" class="oualerts-notify-link">Read More...</a>
+			{% } %}
+			{% if (o.description) { %}
+		</p>
+		{% } %}
+		<p class="oualerts-notify-footer">
+			<button class="oualerts-close-button" id="oualerts-close-button">Close</button>
+		</p>
+	</div>
+</div>
+
+</script>
+
+<script type="text/template" id="oualerts-active-emergency">
+<div id="oualerts-active-alert-display" class="oualerts-notify oualerts-notify-emergency oualerts-top oualerts-top-fixed ouAlertsFadeInDown oualerts-animated-fast" role="alert">
+	<div class="oualerts-notify-body">
+		{% if (o.showDate) { %}
+		<div class="oualerts-notify-date">{%=ouEmergencyAlerts.alertDateFormat("F d, Y h:i A",o.pubDate)%}</div>
+		{% } %}
+		<h3 class="oualerts-notify-title">
+			
+						<svg class="oualerts-notify-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 298 273"><path fill-rule="evenodd" d="M137.626 7.553c4.947-8.9403 17.801-8.9403 22.748 0l135.948 245.652c4.795 8.665-1.471 19.295-11.374 19.295H13.0524c-9.903 0-16.1695-10.63-11.3744-19.295L137.626 7.553zM136.5 85v100h25V85h-25zm0 149.5v-24h25v24h-25z" clip-rule="evenodd"/></svg>
+					
+			{%=o.title%}
+		</h3>
+		{% if (o.subtitle) { %}
+		<p class="oualerts-notify-subtitle"><strong>{%=o.subtitle %}</strong></p>
+		{% } %}
+		{% if (o.description) { %}
+		<p class="oualerts-notify-msg">{%=o.description %}
+			{% } %}
+			{% if (o.guid) { %}
+			<br>
+			<a href="{%=o.guid %}" class="oualerts-notify-link">Read More...</a>
+			{% } %}
+			{% if (o.description) { %}
+		</p>
+		{% } %}
+		<p class="oualerts-notify-footer">
+			<button class="oualerts-close-button" id="oualerts-close-button">Close</button>
+		</p>
+	</div>
+</div>
+</script>
+<script type="text/template" id="oualerts-archived-template">
+{% if (o[0].htmlHeading) { %}
+<h2 class="oualerts-archive-main-heading">{%=o[0].htmlHeading %}</h2>
+{% } %}
+<ul class="oualerts-achive-list">
+	{% for (var i=0; o.length > i; i++) { %}
+	<li class="oualerts-achive-list-item oualerts-archive-type-{%=o[i].severity%}">
+		<div class="oualerts-achive-list-item-inner">
+			<h3 class="oualerts-archive-title">{%=o[i].title%}</h3>
+			<div class="oualerts-archive-date">{%=ouEmergencyAlerts.alertDateFormat("F d, Y h:i A",o[i].pubDate)%}</div>
+			{% if (o[i].subtitle) { %}
+			<p class="oualerts-archive-subtitle"><strong>{%=o[i].subtitle %}</strong></p>
+			{% } %}
+			{% if (o[i].description) { %}
+			<p class="oualerts-archive-msg">{%=o[i].description %}
+				{% } %}
+				{% if (o[i].guid) { %}
+				<a href="{%=o[i].guid %}" class="oualerts-archive-link">{%=ouEmergencyAlerts[o[i].severity + "Archive"].readMoreText%}</a>
+				{% } %}
+				{% if (o[i].description) { %}
+			</p>
+			{% } %}
+			{% if (o[i].updates) { %}
+			<h4 class="oualerts-archive-list-update-header">{%=ouEmergencyAlerts[o[i].severity + "Archive"].updateText %}</h4>
+			<ul class="oualerts-achive-list-update">
+				{% for (var k=0; o[i].updates.length > k; k++) { %}
+				<li class="oualerts-achive-list-item-update">
+					<div class="oualerts-achive-list-item-update-inner">
+						<h5 class="oualerts-archive-title-update">{%=o[i].updates[k].title%}</h5>
+						<div class="oualerts-archive-date-update">{%=ouEmergencyAlerts.alertDateFormat("F d, Y h:i A",o[i].updates[k].pubDate)%}</div>
+						{% if (o[i].updates[k].subtitle) { %}
+						<p class="oualerts-archive-subtitle-update"><strong>{%=o[i].updates[k].subtitle %}</strong></p>
+						{% } %}
+						{% if (o[i].updates[k].description) { %}
+						<p class="oualerts-archive-msg-update">{%=o[i].updates[k].description %}
+							{% } %}
+							{% if (o[i].updates[k].guid) { %}
+							<a href="{%=o[i].updates[k].guid %}" class="oualerts-archive-link-update">{%=ouEmergencyAlerts[o[i].severity + "Archive"].readMoreText%}</a>
+							{% } %}
+							{% if (o[i].updates[k].description) { %}
+						</p>
+						{% } %}
+					</div>
+				</li>
+				{% } %}
+			</ul>
+			{% } %}
+		</div>
+	</li>
+	{% } %}
+</ul>
+</script>
+<!-- ouc:info uuid="f6eaddc9-75d0-40aa-9fae-60e5d641d5fb"/ --></body>
+</html>

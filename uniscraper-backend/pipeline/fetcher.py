@@ -45,6 +45,10 @@ def _is_cloudflare_protected(html: str, url: str = "") -> bool:
     if not html:
         return False
     
+    # Ensure html is a string
+    if not isinstance(html, str):
+        html = str(html)
+    
     html_lower = html.lower()
     
     # Common Cloudflare indicators
@@ -186,10 +190,13 @@ async def _fetch_with_playwright(url: str) -> dict:
             await browser.close()
 
 
-async def fetch_page(url: str) -> dict:
+async def fetch_page(url: str, force_httpx: bool = False) -> dict:
     """
     Fetch a web page, trying httpx first and falling back to Playwright
     if the page appears to be JS-rendered or returns an error status.
+
+    If force_httpx=True, only httpx is used — Playwright is never attempted.
+    Use this for speculative/targeted URLs where Playwright fallback is too slow.
 
     Always returns a dict — never raises an exception.
     """
@@ -203,6 +210,9 @@ async def fetch_page(url: str) -> dict:
         # If httpx detected protection or blocking, return immediately without trying Playwright
         if httpx_result.get("error"):
             error_msg = httpx_result["error"]
+            # Ensure error_msg is a string before calling .lower()
+            if not isinstance(error_msg, str):
+                error_msg = str(error_msg)
             if "cloudflare" in error_msg.lower() or "anti-bot" in error_msg.lower() or "access denied" in error_msg.lower():
                 logger.error(f"[fetcher] {url} — {error_msg}")
                 return httpx_result
@@ -229,6 +239,20 @@ async def fetch_page(url: str) -> dict:
         logger.info(f"[fetcher] {url} — httpx failed ({e}), trying Playwright...")
 
     # --- Attempt 2: Playwright ---
+    # Skip if caller requested httpx-only (e.g. targeted recrawl for speculative URLs)
+    if force_httpx:
+        logger.debug(f"[fetcher] {url} — force_httpx=True, skipping Playwright")
+        if httpx_result:
+            return httpx_result
+        return {
+            "html": None,
+            "method_used": "httpx",
+            "status_code": None,
+            "final_url": url,
+            "word_count": 0,
+            "error": "httpx returned no content and Playwright skipped (force_httpx=True)",
+        }
+
     try:
         pw_result = await _fetch_with_playwright(url)
         

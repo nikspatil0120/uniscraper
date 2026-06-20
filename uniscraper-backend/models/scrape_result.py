@@ -24,6 +24,7 @@ class TuitionFees(BaseModel):
     domestic: Optional[str] = None
     international: Optional[str] = None
     currency: Optional[str] = None
+    breakdown: Optional[str] = None  # Detailed cost breakdown (e.g., "Tuition: $10,058 | Books: $1,250 | Total: $30,722")
     notes: Optional[str] = None
 
 
