@@ -150,13 +150,41 @@ def _is_soft_404(title: str) -> bool:
 # ── Degree level fallback (display-only, Gemini is the authority) ─────────────
 
 _DEGREE_KEYWORDS = [
+    # PhD / Research doctorates
     ("phd", "PhD"), ("ph.d", "PhD"), ("doctorate", "PhD"), ("doctoral", "PhD"),
-    ("mba", "MBA"), ("master of", "Master's"), ("master's", "Master's"),
-    ("masters", "Master's"), ("msc", "Master's"), ("meng", "Master's"),
+    ("dphil", "PhD"), ("d.phil", "PhD"),
+    # Professional doctorates → Doctoral tier
+    ("doctor of", "Doctoral"), ("d.n.p", "Doctoral"), ("dnp", "Doctoral"),
+    ("dpt", "Doctoral"), ("doctor of physical therapy", "Doctoral"),
+    ("doctor of nursing", "Doctoral"), ("doctor of occupational", "Doctoral"),
+    ("otd", "Doctoral"), ("edd", "Doctoral"), ("ed.d", "Doctoral"),
+    ("dba", "Doctoral"), ("jd", "Doctoral"), ("pharmd", "Doctoral"),
+    # Education Specialist — between Master's and Doctoral
+    ("ed.s", "Doctoral"), ("eds in", "Doctoral"), ("education specialist", "Doctoral"),
+    # MBA explicitly first so it matches before generic "master"
+    ("mba", "MBA"), ("m.b.a", "MBA"),
+    # Master's
+    ("master of", "Master's"), ("master's", "Master's"), ("masters", "Master's"),
+    ("msc", "Master's"), ("m.sc", "Master's"), ("meng", "Master's"), ("m.eng", "Master's"),
     ("mres", "Master's"), ("mphil", "Master's"), ("llm", "Master's"),
-    ("mfa", "Master's"), ("postgraduate", "Master's"),
+    ("mfa", "Master's"), ("mpa", "Master's"), ("mph", "Master's"),
+    ("msw", "Master's"), ("msn", "Master's"), ("mse in", "Master's"),
+    ("ms in", "Master's"), ("msa in", "Master's"),
+    # Bare "ms " / "mse " / "msa " with trailing space — catches "MS Engineering"
+    (" ms ", "Master's"), ("^ms ", "Master's"),
+    ("mse ", "Master's"), ("msa ", "Master's"),
+    # Short degree codes as standalone words (with boundary context)
+    ("ma in", "Master's"), ("ma of", "Master's"),     # MA in Sociology
+    ("mfa in", "Master's"), ("mpa in", "Master's"),   # MFA / MPA
+    ("mph in", "Master's"), ("mm in", "Master's"),    # MPH / MM (Music)
+    ("mfa", "Master's"), ("mpa", "Master's"),
+    ("mm ", "Master's"),                               # Master of Music
+    ("postgraduate", "Master's"), ("pgdip", "Master's"), ("pgcert", "Certificate"),
+    ("pgce", "Certificate"),
+    # Bachelor's
     ("bachelor of", "Bachelor's"), ("bachelor's", "Bachelor's"),
     ("undergraduate", "Bachelor's"), ("bsc", "Bachelor's"), ("beng", "Bachelor's"),
+    # Other
     ("associate", "Associate's"), ("certificate", "Certificate"), ("diploma", "Diploma"),
 ]
 
@@ -164,7 +192,11 @@ _DEGREE_KEYWORDS = [
 def _fallback_degree_level(url: str, title: str) -> str:
     combined = (url + " " + title).lower()
     for kw, level in _DEGREE_KEYWORDS:
-        if kw in combined:
+        if kw.startswith("^"):
+            # Anchored check — match start of title only
+            if title.lower().startswith(kw[1:]):
+                return level
+        elif kw in combined:
             return level
     return "Unspecified"
 
@@ -1753,17 +1785,17 @@ async def discover_programs(
     # A university with 100 certificate pages should not crowd out its
     # flagship graduate programs from the final 40.
     #
-    # Priority (lower = better):
-    #   0 PhD / Doctoral
-    #   1 Master's / MBA
-    #   2 Certificate / Diploma / Unspecified
+    # Priority (lower = better).
+    # For a study-abroad platform, Master's and PhD are equally valuable —
+    # both are the primary target audience. Doctoral (MPhil, Ed.D, DPT etc.)
+    # sits just below since those are niche/professional. Certificates last.
     _DEGREE_PRIORITY = {
-        "PhD":        0,
-        "Doctoral":   0,
-        "MBA":        1,
-        "Master's":   1,
+        "PhD":         0,
+        "Master's":    0,
+        "MBA":         0,
+        "Doctoral":    1,
         "Certificate": 2,
-        "Diploma":    2,
+        "Diploma":     2,
         "Unspecified": 2,
         "Associate's": 3,
         "Bachelor's":  3,
