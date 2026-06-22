@@ -881,6 +881,54 @@ async def _call_gemini_classify(
     return []
 
 
+async def _call_groq_classify(candidates: list[dict]) -> list[dict]:
+    """
+    Groq fallback classifier. Same input/output contract as _call_gemini_classify.
+    Used when Gemini quota is exhausted.
+    """
+    from config import settings as _settings
+    if not _settings.groq_api_key:
+        return []
+
+    pages_json = json.dumps(candidates, indent=2)
+    prompt = _CLASSIFICATION_PROMPT.format(pages_json=pages_json)
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {_settings.groq_api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "llama-3.1-8b-instant",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0,
+                    "max_tokens": 2000,
+                },
+            )
+            if resp.status_code == 429:
+                logger.warning("[program_discovery] Groq also rate-limited — no fallback available")
+                return []
+            resp.raise_for_status()
+            text = resp.json()["choices"][0]["message"]["content"]
+            text = re.sub(r"```(?:json)?\s*", "", text).strip().rstrip("```").strip()
+            # Groq sometimes wraps in an object — extract the array
+            if text.startswith("{"):
+                import re as _re
+                m = _re.search(r"\[.*\]", text, _re.DOTALL)
+                text = m.group(0) if m else text
+            results = json.loads(text)
+            if isinstance(results, list):
+                logger.info(f"[program_discovery] Groq fallback classified {len(candidates)} candidates")
+                return results
+            return []
+    except Exception as e:
+        logger.warning(f"[program_discovery] Groq fallback failed: {e}")
+        return []
+
+
 async def gemini_classify_candidates(
     candidates: list[str],
     university_name: str = "",
@@ -1262,37 +1310,60 @@ async def gemini_classify_candidates(
 
         gemini_calls += 1
         batch_wall_start = time.time()
-        logger.info(
-            f"[program_discovery] t={batch_wall_start - start_time:.1f}s: Starting Gemini batch {gemini_calls} "
-            f"({len(batch)} candidates)"
-        )
-        
-        batch_start = time.time()
-        gemini_api_start = time.time()
-        results = await _call_gemini_classify(batch_input)
-        gemini_api_duration = time.time() - gemini_api_start
-        batch_duration = time.time() - batch_start
-        batch_wall_end = time.time()
-        
-        # Check if Gemini auth failed (returns empty list on 403)
-        if results is None or (isinstance(results, list) and len(results) == 0 and len(batch) > 0):
-            # If this is the first batch and we got nothing, Gemini likely failed
-            if gemini_calls == 1:
-                logger.error(
-                    f"[program_discovery] Gemini returned no results on first batch. "
-                    f"Likely auth failure. Skipping remaining Gemini classification."
-                )
-                gemini_available = False
+
+        # Route to Groq if Gemini previously failed on this session
+        use_groq_directly = not gemini_available and gemini_calls > 1
+        if use_groq_directly:
+            logger.info(
+                f"[program_discovery] t={time.time() - start_time:.1f}s: "
+                f"Using Groq for batch {gemini_calls} (Gemini quota exhausted)"
+            )
+            results = await _call_groq_classify(batch_input)
+            if not results:
                 status = "partial"
                 break
-        
-        timings["gemini_api_time"] += gemini_api_duration
-        
-        logger.info(
-            f"[program_discovery] t={batch_wall_end - start_time:.1f}s: Gemini batch {gemini_calls} complete - "
-            f"{len(batch)} candidates classified in {batch_duration:.1f}s "
-            f"(API call: {gemini_api_duration:.1f}s, wall-clock: {batch_wall_end - batch_wall_start:.1f}s)"
-        )
+            gemini_api_duration = 0.0
+            batch_duration = 0.0
+        else:
+            logger.info(
+                f"[program_discovery] t={batch_wall_start - start_time:.1f}s: Starting Gemini batch {gemini_calls} "
+                f"({len(batch)} candidates)"
+            )
+
+            batch_start = time.time()
+            gemini_api_start = time.time()
+            results = await _call_gemini_classify(batch_input)
+            gemini_api_duration = time.time() - gemini_api_start
+            batch_duration = time.time() - batch_start
+            batch_wall_end = time.time()
+
+            # If Gemini returned nothing, try Groq fallback
+            if results is None or (isinstance(results, list) and len(results) == 0 and len(batch) > 0):
+                logger.warning(
+                    f"[program_discovery] Gemini returned no results on batch {gemini_calls} — "
+                    f"trying Groq fallback"
+                )
+                groq_results = await _call_groq_classify(batch_input)
+                if groq_results:
+                    results = groq_results
+                    logger.info(f"[program_discovery] Groq fallback succeeded for batch {gemini_calls}")
+                    gemini_available = False  # switch remaining batches to Groq
+                else:
+                    logger.error(
+                        f"[program_discovery] Both Gemini and Groq failed on batch {gemini_calls}. "
+                        f"Stopping classification."
+                    )
+                    gemini_available = False
+                    status = "partial"
+                    break
+
+            timings["gemini_api_time"] += gemini_api_duration
+
+            logger.info(
+                f"[program_discovery] t={batch_wall_end - start_time:.1f}s: Gemini batch {gemini_calls} complete - "
+                f"{len(batch)} candidates classified in {batch_duration:.1f}s "
+                f"(API call: {gemini_api_duration:.1f}s, wall-clock: {batch_wall_end - batch_wall_start:.1f}s)"
+            )
 
         for result in results:
             if not isinstance(result, dict):
