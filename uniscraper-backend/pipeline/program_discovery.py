@@ -375,7 +375,17 @@ def _calculate_simple_confidence(url: str) -> tuple[float, float]:
         if hint in url_lower:
             negative += 5
             break
-    
+
+    # Certificate slug override: if the URL slug itself contains "certificate"
+    # or "cert", cap positive signals — the URL is advertising a cert program,
+    # not a degree, regardless of what other degree codes appear in the path.
+    # e.g. "online-msn-in-nursing-nurse-administrator-certificate" scores +5
+    # from msn- but should not outrank degree programs in candidate ordering.
+    import re as _re3
+    _slug_final = url_lower.rstrip("/").rsplit("/", 1)[-1].rsplit(".", 1)[0]
+    if _re3.search(r"(certificate|cert)($|-)", _slug_final):
+        positive = min(positive, 1.0)  # cap at +1, same as explicit cert signal
+
     return (positive, negative)
 
 
@@ -815,10 +825,19 @@ async def _call_gemini_classify(
                         )
                         return []
                     
-                    # Handle 429 with backoff
+                    # Handle 429 with backoff — but give up fast on quota exhaustion.
+                    # Two consecutive 429s = quota exhausted for the session.
+                    # No point waiting 90s for a third attempt that will also 429.
                     if resp.status_code == 429:
-                        wait = 30 * (attempt + 1)
-                        logger.warning(f"[program_discovery] Gemini 429, waiting {wait}s")
+                        if attempt >= 1:
+                            # Already retried once — quota is exhausted, bail out
+                            logger.warning(
+                                f"[program_discovery] Gemini 429 on attempt {attempt + 1} "
+                                f"— quota exhausted, aborting to avoid wasted wait time"
+                            )
+                            return []
+                        wait = 30  # single short wait on first 429
+                        logger.warning(f"[program_discovery] Gemini 429, waiting {wait}s (attempt {attempt + 1}/2)")
                         await asyncio.sleep(wait)
                         continue
                     
