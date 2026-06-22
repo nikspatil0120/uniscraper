@@ -294,22 +294,42 @@ def _calculate_simple_confidence(url: str) -> tuple[float, float]:
     # Positive signals - degree slugs
     postgrad_slugs = [
         "msc-", "ma-", "mba-", "llm-", "mphil-", "phd-",
-        "pgce-", "pgdip-", "mres-", "med-", "meng-", "mfin-"
+        "pgce-", "pgdip-", "mres-", "med-", "meng-", "mfin-",
+        # Additional MS variants common in US universities
+        "ms-in-", "ms-by-", "msa-", "mse-", "msw-", "msn-", "mpa-",
+        "/ms-", "-ms-",  # path segment matching
     ]
     for slug in postgrad_slugs:
         if slug in url_lower:
             positive += 5
             break
+
+    # Mild negative for certificate pages — valid but lower priority than degrees
+    if "certificate-in-" in url_lower or "cert-in-" in url_lower:
+        negative += 3
     
-    # Negative signals - undergraduate
+    # Negative signals - undergraduate (check path segment, not raw substring)
+    # Use path segment check to avoid false positives like "mba-" matching "ba-"
     if "/undergraduate/" in url_lower:
         negative += 10
-    
-    undergrad_slugs = ["bsc-", "ba-", "beng-", "llb-", "bba-"]
-    for slug in undergrad_slugs:
-        if slug in url_lower:
+    else:
+        # Check the slug directly (strip extension, strip online- prefix)
+        import re as _re2
+        _path = url_lower.split("?")[0]
+        _slug = _path.rstrip("/").rsplit("/", 1)[-1].rsplit(".", 1)[0]
+        for _pfx in ("online-", "on-campus-", "campus-"):
+            if _slug.startswith(_pfx):
+                _slug = _slug[len(_pfx):]
+                break
+        _UNDERGRAD_SCORE_RE = _re2.compile(
+            r"^(bsc|ba|bfa|bme|bse|bsn|bba|bsba|bsrs|bsw|bsed|bas|"
+            r"bsa|bgs|bsce|bsee|bsme|beng|barch|bbe|bmus|bm|bcom|"
+            r"aas|aasn|ags|as[_-]|aa[_-])"
+            r"([-_]|in-|$)",
+            _re2.IGNORECASE,
+        )
+        if _UNDERGRAD_SCORE_RE.match(_slug):
             negative += 10
-            break
     
     # Negative signals - non-program pages
     non_program_hints = [
@@ -1391,6 +1411,13 @@ async def sibling_expansion(
 
     sibling_candidates = [u for u in sibling_candidates if _is_grad_sibling(u)]
 
+    # Also filter out certificate URLs from siblings — they score negative in Stage 1.5
+    # and shouldn't be re-introduced via sibling expansion
+    sibling_candidates = [
+        u for u in sibling_candidates
+        if not ("certificate-in-" in u.lower() or "cert-in-" in u.lower())
+    ]
+
     # Cap sibling candidates to 2× remaining headroom
     from config import settings as _settings
     cap = _settings.max_programs_per_university
@@ -1716,6 +1743,69 @@ async def discover_programs(
         if siblings:
             logger.info(f"[program_discovery] Stage 4: {len(siblings)} additional siblings")
             confirmed = confirmed + siblings
+
+    # ── Post-classification tier sort ────────────────────────────────────────
+    # Sort confirmed programs by degree priority before applying the cap.
+    # This ensures PhD/Doctoral/Master's programs are selected preferentially
+    # over Certificates, regardless of the order Gemini confirmed them.
+    # A university with 100 certificate pages should not crowd out its
+    # flagship graduate programs from the final 40.
+    #
+    # Priority (lower = better):
+    #   0 PhD / Doctoral
+    #   1 Master's / MBA
+    #   2 Certificate / Diploma / Unspecified
+    _DEGREE_PRIORITY = {
+        "PhD":        0,
+        "Doctoral":   0,
+        "MBA":        1,
+        "Master's":   1,
+        "Certificate": 2,
+        "Diploma":    2,
+        "Unspecified": 2,
+        "Associate's": 3,
+        "Bachelor's":  3,
+    }
+
+    confirmed.sort(key=lambda p: _DEGREE_PRIORITY.get(p.get("degree_level", "Unspecified"), 2))
+
+    # Log tier breakdown before cap
+    from collections import Counter as _Counter
+    tier_counts = _Counter(p.get("degree_level", "Unspecified") for p in confirmed)
+    logger.info(
+        f"[program_discovery] Pre-cap tier breakdown ({len(confirmed)} total): "
+        + ", ".join(f"{k}={v}" for k, v in sorted(tier_counts.items(), key=lambda x: _DEGREE_PRIORITY.get(x[0], 2)))
+    )
+
+    # Soft certificate cap: certificates can fill at most 25% of the final output.
+    # If a university has 30 certs and 10 masters, we still surface the 10 masters
+    # first and only fill remaining slots with certs — never the other way around.
+    # Falls back gracefully: if there are NO masters/PhD programs, certs are fine.
+    cap = settings.max_programs_per_university
+    cert_soft_cap = max(5, cap // 4)  # 25% of cap, minimum 5
+    degree_programs = [p for p in confirmed if _DEGREE_PRIORITY.get(p.get("degree_level", "Unspecified"), 2) < 2]
+    cert_programs   = [p for p in confirmed if _DEGREE_PRIORITY.get(p.get("degree_level", "Unspecified"), 2) >= 2]
+
+    if len(degree_programs) >= cap:
+        # Enough degree programs to fill the cap — don't include any certs
+        confirmed = degree_programs
+        logger.info(f"[program_discovery] Tier sort: {len(degree_programs)} degree programs >= cap ({cap}), certs excluded")
+    elif len(degree_programs) + cert_soft_cap < cap:
+        # Not enough degree programs to fill even the cert-capped result — allow all certs
+        confirmed = degree_programs + cert_programs
+        logger.info(
+            f"[program_discovery] Tier sort: {len(degree_programs)} degree programs + "
+            f"{len(cert_programs)} certs (soft cap not limiting)"
+        )
+    else:
+        # Mix: fill degree programs first, then fill remaining slots with certs
+        remaining_slots = cap - len(degree_programs)
+        certs_to_include = min(remaining_slots, cert_soft_cap, len(cert_programs))
+        confirmed = degree_programs + cert_programs[:certs_to_include]
+        logger.info(
+            f"[program_discovery] Tier sort: {len(degree_programs)} degree programs + "
+            f"{certs_to_include}/{len(cert_programs)} certs (soft cap={cert_soft_cap})"
+        )
 
     # ── Deduplicate and cap ───────────────────────────────────────────────────
     seen_urls: set[str] = set()
