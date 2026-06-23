@@ -557,6 +557,98 @@ def _infer_parents_from_sitemap_index(domain: str, all_locs: list[str]) -> list[
 
 # ── Stage 2: Cheap Pre-Filter ─────────────────────────────────────────────────
 
+# ── Stage 2: Cheap Pre-Filter ─────────────────────────────────────────────────
+
+def _is_likely_directory_page(url: str, word_count: int = 0) -> bool:
+    """
+    Detect if a URL is likely a directory/catalog page that LISTS multiple programs
+    rather than describing a single program.
+    
+    Directory pages should be expanded (extract child links) rather than classified
+    as single programs.
+    
+    Detection signals:
+    - URL patterns: /graduate-programs/, /program-search/, /catalog/
+    - Catalog domains: catalog.university.edu
+    - Long pages: catalog pages typically have 2000+ words
+    
+    Returns:
+        True if likely a directory page (needs expansion)
+        False if likely a single program page (needs classification)
+    """
+    url_lower = url.lower()
+    
+    DIRECTORY_PAGE_SIGNALS = [
+        "graduate-programs", "program-search", "catalog",
+        "all-programs", "programs-of-study", "degree-requirements",
+        "graduate-degrees", "course-list",
+    ]
+    
+    has_signal = any(s in url_lower for s in DIRECTORY_PAGE_SIGNALS)
+    is_long = word_count > 2000  # Catalog pages are long; individual programs are typically shorter
+    
+    return has_signal or is_long
+
+
+async def _expand_directory_page(url: str, html: str) -> list[str]:
+    """
+    Extract outbound program links from a directory/catalog page.
+    
+    Args:
+        url: The directory page URL
+        html: The fetched HTML content
+    
+    Returns:
+        List of extracted program URLs (capped at 50 per directory)
+    """
+    try:
+        soup = BeautifulSoup(html, 'lxml')
+        links = soup.find_all('a', href=True)
+        
+        extracted_urls = []
+        seen = set()
+        
+        # Degree-related keywords to filter links
+        PROGRAM_LINK_KEYWORDS = [
+            'master', 'msc', 'ma', 'mba', 'ms',
+            'phd', 'doctorate', 'doctoral',
+            'graduate', 'postgraduate',
+            'program', 'degree',
+        ]
+        
+        for link in links:
+            href = link.get('href', '').strip()
+            if not href or href.startswith('#') or href.startswith('javascript:'):
+                continue
+            
+            # Make absolute URL
+            abs_url = urljoin(url, href)
+            
+            # Deduplicate
+            norm_url = _normalize_url(abs_url)
+            if norm_url in seen:
+                continue
+            seen.add(norm_url)
+            
+            # Filter: Keep links that look like programs
+            link_text = link.get_text(' ', strip=True).lower()
+            url_lower = abs_url.lower()
+            
+            # Check if link or URL contains program-related keywords
+            if any(kw in url_lower or kw in link_text for kw in PROGRAM_LINK_KEYWORDS):
+                extracted_urls.append(abs_url)
+            
+            # Cap at 50 links per directory to avoid runaway growth
+            if len(extracted_urls) >= 50:
+                break
+        
+        return extracted_urls
+    
+    except Exception as e:
+        logger.debug(f"[program_discovery] Directory expansion error for {url}: {e}")
+        return []
+
+
 _OBVIOUS_JUNK = [
     ".pdf", ".doc", ".docx", ".jpg", ".png", ".zip", ".xml",
     "/news/", "/events/", "/staff/", "/faculty-directory/",
@@ -1374,6 +1466,64 @@ async def gemini_classify_candidates(
         f"min={min_candidate_time:.2f}s, "
         f"max={max_candidate_time:.2f}s"
     )
+
+    # ── Directory Page Expansion ──────────────────────────────────────────────
+    # Detect catalog/listing pages and expand them into individual program links
+    directory_pages = []
+    for candidate in fetched:
+        url = candidate["url"]
+        word_count = len(candidate.get("snippet", "").split()) * 5  # Rough estimate
+        if _is_likely_directory_page(url, word_count):
+            directory_pages.append(candidate)
+    
+    if directory_pages:
+        logger.info(
+            f"[program_discovery] Detected {len(directory_pages)} directory/catalog pages "
+            f"(expanding to extract program links)"
+        )
+        
+        expanded_urls = set()
+        for dir_page in directory_pages:
+            url = dir_page["url"]
+            # Re-fetch to get full HTML (not just snippet)
+            html, status = await _fetch_html(url, timeout=8.0)
+            if status == 200 and html:
+                child_urls = await _expand_directory_page(url, html)
+                expanded_urls.update(child_urls)
+                logger.info(
+                    f"[program_discovery] Directory expansion: {url[:60]} → "
+                    f"{len(child_urls)} child links extracted"
+                )
+        
+        if expanded_urls:
+            # Filter expanded URLs through prefilter and graduate filter
+            expanded_filtered = [u for u in expanded_urls if cheap_prefilter(u)]
+            logger.info(
+                f"[program_discovery] Expanded URLs: {len(expanded_urls)} total, "
+                f"{len(expanded_filtered)} passed prefilter"
+            )
+            
+            # Add to needs_gemini list for classification
+            # (they'll be classified in subsequent batches)
+            existing_urls = {c["url"] for c in fetched}
+            new_candidates = [u for u in expanded_filtered if u not in existing_urls]
+            
+            if new_candidates:
+                logger.info(
+                    f"[program_discovery] Adding {len(new_candidates)} new candidates from "
+                    f"directory expansion to classification queue"
+                )
+                # Fetch these new candidates
+                expansion_fetch_results = await asyncio.gather(
+                    *[fetch_candidate_info(u) for u in new_candidates[:50]],  # Cap at 50
+                    return_exceptions=True,
+                )
+                expansion_fetched = [r for r in expansion_fetch_results if isinstance(r, dict) and r is not None]
+                fetched.extend(expansion_fetched)
+                logger.info(
+                    f"[program_discovery] Directory expansion added {len(expansion_fetched)} new "
+                    f"fetchable candidates (total now: {len(fetched)})"
+                )
 
     if not fetched:
         elapsed = time.time() - start_time
