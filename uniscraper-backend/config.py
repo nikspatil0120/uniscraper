@@ -34,9 +34,19 @@ class Settings(BaseSettings):
     # ── Phase 2: Program discovery ─────────────────────────────────────────────
     serpapi_key: str = ""
     serpapi_enabled: bool = True
+    searchapi_key: str = ""  # Fallback when SerpAPI limit exhausted
+    searchapi_enabled: bool = True
+    searxng_url: str = ""  # Local: http://localhost:8080, Public: https://search.inetol.net
     # Client-approved scope: 30-50 graduate programs per university.
     # Midpoint of range. Tune via env var without code changes.
     max_programs_per_university: int = 40
+
+    # ── Google Vertex AI (recommended by reviewers) ───────────────────────────
+    vertex_project_id: str = ""  # Your GCP project ID
+    google_application_credentials: str = ""  # Path to service account JSON
+    vertex_enabled: bool = False  # Set to true once credentials are configured
+    vertex_location: str = "us-central1"  # GCP region for Vertex AI
+    vertex_model: str = "gemini-2.0-flash-exp"  # Vertex model to use
 
     @property
     def cors_origins_list(self) -> List[str]:

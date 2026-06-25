@@ -11,3 +11,11 @@ build/
 .pytest_cache/
 .mypy_cache/
 tests/validation/results/*.json
+
+# Google Cloud credentials - never commit these!
+credentials/
+*.json
+!requirements.json
+!package.json
+!tsconfig.json
+!components.json

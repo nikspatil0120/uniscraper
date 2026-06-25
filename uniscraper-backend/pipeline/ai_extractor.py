@@ -1,10 +1,12 @@
 # pipeline/ai_extractor.py
 # extract_fields(combined_text, primary_url, context_hint) -> dict
 #
-# Hybrid extraction: regex pre-extraction → Gemini call (with Ollama fallback) → regex fallbacks.
-# Model routing:
-#   PRIMARY  — Gemini 2.5 Flash  (best quality, cloud)
-#   FALLBACK — Qwen2.5:7b via Ollama  (local, no quota, used on 429/503)
+# Hybrid extraction: regex pre-extraction → AI call → regex fallbacks.
+# Model routing (priority order):
+#   PRIMARY  — Google Vertex AI Gemini (best quotas, enterprise reliability)
+#   FALLBACK 1 — Gemini API (standard cloud)
+#   FALLBACK 2 — Groq Llama (fast cloud, separate quota)
+#   FALLBACK 3 — Qwen2.5:7b via Ollama (local, no quota)
 
 import asyncio
 import json
@@ -27,6 +29,15 @@ from pipeline.regex_extractor import (
     apply_regex_fallbacks,
     format_hints_for_prompt,
 )
+
+# Import Vertex AI service
+try:
+    from services.vertex_service import get_vertex_service, is_vertex_available
+    VERTEX_AVAILABLE = True
+except ImportError:
+    VERTEX_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning("Vertex AI service not available")
 
 logger = logging.getLogger(__name__)
 
@@ -262,6 +273,39 @@ async def _call_groq(user_prompt: str) -> str:
         return data["choices"][0]["message"]["content"]
     except (KeyError, IndexError) as e:
         raise ValueError(f"Unexpected Groq response structure: {e} — {str(data)[:300]}")
+
+
+# ── Vertex AI caller ──────────────────────────────────────────────────────────
+
+async def _call_vertex_ai(user_prompt: str) -> str:
+    """
+    Call Google Vertex AI Gemini.
+    Enterprise-grade API with higher quotas and better reliability.
+    Recommended by project reviewers.
+    """
+    if not VERTEX_AVAILABLE:
+        raise ValueError("Vertex AI not available - install google-cloud-aiplatform")
+    
+    vertex_service = get_vertex_service()
+    
+    if not vertex_service.is_available():
+        raise ValueError("Vertex AI not configured - check VERTEX_PROJECT_ID and credentials")
+    
+    try:
+        # Vertex AI handles truncation internally based on model context window
+        # For gemini-2.0-flash-exp: 1M token context window (very generous)
+        response_text = vertex_service.generate_json(
+            prompt=user_prompt,
+            temperature=0.0,
+            max_output_tokens=4000
+        )
+        
+        # Response is already parsed as JSON dict, convert back to string for compatibility
+        return json.dumps(response_text)
+    
+    except Exception as e:
+        logger.error(f"[ai_extractor] Vertex AI call failed: {e}")
+        raise
 
 
 # ── Public entry point ────────────────────────────────────────────────────────
@@ -600,94 +644,110 @@ async def extract_fields(
         page_text=truncated,
     )
 
-    # ── Step 6: Hybrid LLM call — Gemini primary, Ollama fallback ────────────
+    # ── Step 6: Hybrid LLM call — Vertex → Gemini → Groq → Ollama ───────────
     raw_response = None
-    model_used = settings.llm_model
+    model_used = "unknown"
     active_model = settings.llm_model
     consecutive_429s = 0
 
-    for attempt in range(_MAX_RETRIES):
+    # Try Vertex AI first if enabled (recommended by reviewers)
+    if VERTEX_AVAILABLE and is_vertex_available() and settings.vertex_enabled:
         try:
-            raw_response = await _call_gemini(user_prompt, model=active_model)
-            model_used = active_model
-            logger.info(f"[ai_extractor] Gemini succeeded (attempt {attempt + 1}, model={active_model})")
-            break
+            logger.info("[ai_extractor] Trying Vertex AI (primary)")
+            print(f"[ai_extractor] Using Vertex AI/{settings.vertex_model}")
+            raw_response = await _call_vertex_ai(user_prompt)
+            model_used = f"vertex/{settings.vertex_model}"
+            logger.info("[ai_extractor] Vertex AI extraction succeeded")
+            print("[ai_extractor] Vertex AI extraction complete")
+        except Exception as vertex_err:
+            logger.warning(f"[ai_extractor] Vertex AI failed: {type(vertex_err).__name__}: {vertex_err}")
+            print(f"[ai_extractor] Vertex AI unavailable - falling back to Gemini API")
+            raw_response = None  # Continue to Gemini fallback
+    
+    # Fallback to standard Gemini API if Vertex not available/failed
+    if raw_response is None:
+        for attempt in range(_MAX_RETRIES):
+            try:
+                raw_response = await _call_gemini(user_prompt, model=active_model)
+                model_used = active_model
+                logger.info(f"[ai_extractor] Gemini succeeded (attempt {attempt + 1}, model={active_model})")
+                break
 
-        except httpx.HTTPStatusError as e:
-            status = e.response.status_code
+            except httpx.HTTPStatusError as e:
+                status = e.response.status_code
 
-            if status == 429:
-                consecutive_429s += 1
+                if status == 429:
+                    consecutive_429s += 1
 
-            if (status == 429 or status >= 500) and attempt < _MAX_RETRIES - 1:
-                # After 2 consecutive 429s, try Groq first (fast cloud, separate quota)
-                if consecutive_429s >= 2:
-                    logger.warning(f"[ai_extractor] {consecutive_429s} consecutive 429s — trying Groq fallback")
-                    print(f"[ai_extractor] Gemini rate-limited ({consecutive_429s}x) - trying Groq/{_GROQ_MODEL}")
-                    if settings.groq_api_key:
-                        try:
-                            raw_response = await _call_groq(user_prompt)
-                            model_used = f"groq/{_GROQ_MODEL}"
-                            logger.info("[ai_extractor] Groq fallback succeeded")
-                            print("[ai_extractor] Groq extraction complete")
-                            break
-                        except Exception as groq_err:
-                            logger.warning(f"[ai_extractor] Groq fallback failed: {type(groq_err).__name__}: {groq_err}")
-                            print(f"[ai_extractor] Groq error ({type(groq_err).__name__}) - trying Ollama")
-                    else:
-                        print("[ai_extractor] No GROQ_API_KEY set — skipping Groq fallback")
-
-                    # Groq failed or not configured — try Ollama next
-                    print(f"[ai_extractor] Trying Ollama/{_OLLAMA_MODEL} as secondary fallback")
-                    try:
-                        if await _is_ollama_available():
-                            raw_response = await _call_ollama(user_prompt)
-                            model_used = f"ollama/{_OLLAMA_MODEL}"
-                            logger.info("[ai_extractor] Ollama fallback succeeded")
-                            print("[ai_extractor] Ollama extraction complete")
-                            break
+                if (status == 429 or status >= 500) and attempt < _MAX_RETRIES - 1:
+                    # After 2 consecutive 429s, try Groq first (fast cloud, separate quota)
+                    if consecutive_429s >= 2:
+                        logger.warning(f"[ai_extractor] {consecutive_429s} consecutive 429s — trying Groq fallback")
+                        print(f"[ai_extractor] Gemini rate-limited ({consecutive_429s}x) - trying Groq/{_GROQ_MODEL}")
+                        if settings.groq_api_key:
+                            try:
+                                raw_response = await _call_groq(user_prompt)
+                                model_used = f"groq/{_GROQ_MODEL}"
+                                logger.info("[ai_extractor] Groq fallback succeeded")
+                                print("[ai_extractor] Groq extraction complete")
+                                break
+                            except Exception as groq_err:
+                                logger.warning(f"[ai_extractor] Groq fallback failed: {type(groq_err).__name__}: {groq_err}")
+                                print(f"[ai_extractor] Groq error ({type(groq_err).__name__}) - trying Ollama")
                         else:
-                            print("[ai_extractor] Ollama not running - falling back to flash-lite")
-                    except Exception as ollama_err:
-                        logger.warning(f"[ai_extractor] Ollama fallback failed: {type(ollama_err).__name__}: {ollama_err}")
-                        print(f"[ai_extractor] Ollama error ({type(ollama_err).__name__}) - falling back to flash-lite")
+                            print("[ai_extractor] No GROQ_API_KEY set — skipping Groq fallback")
 
-                # Final cloud fallback: flash-lite (higher RPM limit)
-                if status == 429 and attempt >= 1 and active_model == settings.llm_model:
-                    active_model = "gemini-2.5-flash-lite"
-                    print(f"[ai_extractor] Switching to flash-lite as final fallback")
+                        # Groq failed or not configured — try Ollama next
+                        print(f"[ai_extractor] Trying Ollama/{_OLLAMA_MODEL} as secondary fallback")
+                        try:
+                            if await _is_ollama_available():
+                                raw_response = await _call_ollama(user_prompt)
+                                model_used = f"ollama/{_OLLAMA_MODEL}"
+                                logger.info("[ai_extractor] Ollama fallback succeeded")
+                                print("[ai_extractor] Ollama extraction complete")
+                                break
+                            else:
+                                print("[ai_extractor] Ollama not running - falling back to flash-lite")
+                        except Exception as ollama_err:
+                            logger.warning(f"[ai_extractor] Ollama fallback failed: {type(ollama_err).__name__}: {ollama_err}")
+                            print(f"[ai_extractor] Ollama error ({type(ollama_err).__name__}) - falling back to flash-lite")
 
-                delay = _RETRY_DELAYS[attempt] + random.uniform(0, 2)
-                print(f"[ai_extractor] HTTP {status} - retry {attempt + 1}/{_MAX_RETRIES} in {delay:.0f}s...")
-                logger.warning(f"[ai_extractor] {primary_url} — HTTP {status}, retry {attempt + 1} in {delay:.1f}s...")
-                await asyncio.sleep(delay)
+                    # Final cloud fallback: flash-lite (higher RPM limit)
+                    if status == 429 and attempt >= 1 and active_model == settings.llm_model:
+                        active_model = "gemini-2.5-flash-lite"
+                        print(f"[ai_extractor] Switching to flash-lite as final fallback")
 
-            else:
-                logger.error(f"[ai_extractor] HTTP {status} after {attempt + 1} attempts")
-                fallback = _safe_fallback(f"Gemini extraction failed (HTTP {status})")
-                validated_fallback = validate_extraction_result(fallback, extraction_text)
-                r = apply_regex_fallbacks(validated_fallback, hints, extraction_text)
+                    delay = _RETRY_DELAYS[attempt] + random.uniform(0, 2)
+                    print(f"[ai_extractor] HTTP {status} - retry {attempt + 1}/{_MAX_RETRIES} in {delay:.0f}s...")
+                    logger.warning(f"[ai_extractor] {primary_url} — HTTP {status}, retry {attempt + 1} in {delay:.1f}s...")
+                    await asyncio.sleep(delay)
+
+                else:
+                    logger.error(f"[ai_extractor] HTTP {status} after {attempt + 1} attempts")
+                    fallback = _safe_fallback(f"Gemini extraction failed (HTTP {status})")
+                    validated_fallback = validate_extraction_result(fallback, extraction_text)
+                    r = apply_regex_fallbacks(validated_fallback, hints, extraction_text)
+                    r["_model_used"] = "failed"
+                    return r
+
+            except (httpx.TimeoutException, httpx.RequestError) as e:
+                if attempt < _MAX_RETRIES - 1:
+                    delay = _RETRY_DELAYS[attempt] + random.uniform(0, 2)
+                    logger.warning(f"[ai_extractor] network error: {e}, retry in {delay:.1f}s...")
+                    await asyncio.sleep(delay)
+                else:
+                    fallback = _safe_fallback("Gemini extraction failed due to network error")
+                    validated_fallback = validate_extraction_result(fallback, extraction_text)
+                    r = apply_regex_fallbacks(validated_fallback, hints, extraction_text)
+                    r["_model_used"] = "failed"
+                    return r
+
+            except ValueError as e:
+                logger.error(f"[ai_extractor] unexpected response: {e}")
+                fallback = _safe_fallback("Gemini returned unexpected response structure")
+                r = apply_regex_fallbacks(fallback, hints, cleaned)
                 r["_model_used"] = "failed"
                 return r
-
-        except (httpx.TimeoutException, httpx.RequestError) as e:
-            if attempt < _MAX_RETRIES - 1:
-                delay = _RETRY_DELAYS[attempt] + random.uniform(0, 2)
-                logger.warning(f"[ai_extractor] network error: {e}, retry in {delay:.1f}s...")
-                await asyncio.sleep(delay)
-            else:
-                fallback = _safe_fallback("Gemini extraction failed due to network error")
-                validated_fallback = validate_extraction_result(fallback, extraction_text)
-                r = apply_regex_fallbacks(validated_fallback, hints, extraction_text)
-                r["_model_used"] = "failed"
-                return r
-
-        except ValueError as e:
-            logger.error(f"[ai_extractor] unexpected response: {e}")
-            fallback = _safe_fallback("Gemini returned unexpected response structure")
-            r = apply_regex_fallbacks(fallback, hints, cleaned)
-            r["_model_used"] = "failed"
-            return r
 
     if raw_response is None:
         fallback = _safe_fallback("Gemini extraction failed after all retries")

@@ -1,0 +1,194 @@
+═══════════════════════════════════════════════════════════════════════════════
+  GOOGLE VERTEX AI INTEGRATION GUIDE
+═══════════════════════════════════════════════════════════════════════════════
+
+OVERVIEW
+--------
+This system now supports Google Vertex AI as the primary extraction method,
+as recommended by the project reviewers (Res). Vertex AI provides:
+
+  ✓ Higher quotas than standard Gemini API
+  ✓ Better reliability for enterprise applications
+  ✓ More stable performance at scale
+  ✓ Dedicated support for production use
+
+ARCHITECTURE
+------------
+The extraction pipeline now uses a 4-tier fallback system:
+
+  TIER 1: Vertex AI Gemini       (primary - best quotas & reliability)
+       ↓  (if not configured or fails)
+  TIER 2: Gemini API              (standard cloud API)
+       ↓  (if rate limited)
+  TIER 3: Groq Llama              (fast cloud, separate quota)
+       ↓  (if unavailable)
+  TIER 4: Ollama Qwen2.5          (local, no quota limits)
+
+SETUP STEPS
+-----------
+
+STEP 1: Get Google Cloud Credentials
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Option A - Company Provides Account (RECOMMENDED):
+  → Ask your company/reviewers for:
+     • Service account JSON file
+     • Google Cloud Project ID
+  → They mentioned they will provide this if implementation works
+
+Option B - Create Your Own:
+  1. Go to https://console.cloud.google.com
+  2. Create a new project (e.g., "uniscraper-ai")
+  3. Enable Vertex AI API:
+     • Go to: APIs & Services → Library
+     • Search: "Vertex AI API"
+     • Click Enable
+  4. Create Service Account:
+     • Go to: IAM & Admin → Service Accounts
+     • Click: Create Service Account
+     • Name: vertex-ai-service
+     • Role: Vertex AI User
+  5. Generate Key:
+     • Click on the service account
+     • Keys tab → Add Key → Create New Key
+     • Choose JSON
+     • Download the file
+
+STEP 2: Install Dependencies (ALREADY DONE)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ✓ Dependencies installed:
+    - google-cloud-aiplatform>=1.73.0
+    - google-auth>=2.36.0
+
+STEP 3: Place Credentials
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+  1. Put your service account JSON file here:
+     uniscraper-backend/credentials/vertex-key.json
+
+  2. The file should look like:
+     {
+       "type": "service_account",
+       "project_id": "your-project-id",
+       "private_key_id": "...",
+       "private_key": "-----BEGIN PRIVATE KEY-----\n...",
+       ...
+     }
+
+STEP 4: Update Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Edit: uniscraper-backend/.env
+
+  Add/Update these lines:
+    VERTEX_PROJECT_ID=your-gcp-project-id
+    VERTEX_ENABLED=true
+    GOOGLE_APPLICATION_CREDENTIALS=C:\Projects\uniscrape\uniscraper-backend\credentials\vertex-key.json
+
+  Optional settings (already have good defaults):
+    VERTEX_LOCATION=us-central1
+    VERTEX_MODEL=gemini-2.0-flash-exp
+
+STEP 5: Test the Integration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Run the test script:
+    py -3.13 test_vertex_integration.py
+
+  Expected output:
+    ✅ Vertex AI packages installed
+    ✅ Vertex AI is enabled
+    ✅ Credentials file found
+    ✅ Vertex AI service initialized successfully
+    ✅ Vertex AI is READY and will be used for extraction
+
+STEP 6: Run a Test Scrape
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Test with a university:
+    py -3.13 -c "
+import asyncio
+from routers.discover import discover_programs
+
+async def test():
+    result = await discover_programs('https://www.mit.edu')
+    print(f'Found {len(result.programs)} programs')
+    print(f'Model used: {result.programs[0].get(\"_model_used\", \"unknown\")}')
+
+asyncio.run(test())
+"
+
+  Look for output:
+    [ai_extractor] Using Vertex AI/gemini-2.0-flash-exp
+    [ai_extractor] Vertex AI extraction complete
+
+VERIFICATION CHECKLIST
+----------------------
+  □ Dependencies installed (google-cloud-aiplatform, google-auth)
+  □ Service account JSON in credentials/vertex-key.json
+  □ VERTEX_PROJECT_ID set in .env
+  □ VERTEX_ENABLED=true in .env
+  □ test_vertex_integration.py passes all checks
+  □ Test scrape shows "Using Vertex AI" in logs
+
+TROUBLESHOOTING
+---------------
+
+Issue: "Credentials file not found"
+→ Solution: Check the path in GOOGLE_APPLICATION_CREDENTIALS
+           Make sure to use absolute path with backslashes escaped:
+           C:\Projects\uniscrape\uniscraper-backend\credentials\vertex-key.json
+
+Issue: "VERTEX_PROJECT_ID not set"
+→ Solution: Add VERTEX_PROJECT_ID=your-project-id to .env
+           Project ID is in your service account JSON
+
+Issue: "Permission denied" or "403 Forbidden"
+→ Solution: Service account needs "Vertex AI User" role
+           Go to IAM & Admin → IAM and add the role
+
+Issue: "Vertex AI not available, falling back to Gemini API"
+→ This is NORMAL if Vertex is not configured yet
+  The system will work fine with the fallback chain
+
+Issue: "API not enabled"
+→ Solution: Enable Vertex AI API in Google Cloud Console:
+           https://console.cloud.google.com/apis/library/aiplatform.googleapis.com
+
+SECURITY NOTES
+--------------
+  ⚠ NEVER commit credentials/vertex-key.json to git
+  ⚠ The .gitignore already excludes the credentials/ folder
+  ⚠ Keep the service account JSON secure
+  ⚠ Rotate keys periodically for security
+
+WHAT CHANGED
+------------
+Files Modified:
+  ✓ config.py - Added Vertex AI configuration settings
+  ✓ .env - Added Vertex AI environment variables
+  ✓ requirements.txt - Added google-cloud-aiplatform & google-auth
+  ✓ services/vertex_service.py - Created Vertex AI wrapper service
+  ✓ pipeline/ai_extractor.py - Integrated Vertex as primary extraction method
+  ✓ .gitignore - Added credentials/ folder exclusion
+
+Files Created:
+  ✓ test_vertex_integration.py - Test script for Vertex AI setup
+  ✓ credentials/README.txt - Instructions for credentials folder
+  ✓ VERTEX_AI_SETUP.txt - This file
+
+NEXT STEPS
+----------
+  1. Wait for company/reviewers to provide Google Cloud account
+  2. Place service account JSON in credentials/vertex-key.json
+  3. Update .env with VERTEX_PROJECT_ID and VERTEX_ENABLED=true
+  4. Run test_vertex_integration.py
+  5. Run a full scrape test
+  6. Monitor logs to confirm Vertex AI is being used
+  7. Demonstrate to reviewers
+
+SUPPORT
+-------
+If you encounter issues:
+  1. Run: py -3.13 test_vertex_integration.py
+  2. Check the output for specific error messages
+  3. Verify all configuration values in .env
+  4. Check credentials/vertex-key.json exists and is valid JSON
+  5. Ensure Vertex AI API is enabled in Google Cloud Console
+
+═══════════════════════════════════════════════════════════════════════════════
